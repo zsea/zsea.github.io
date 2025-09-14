@@ -5,7 +5,7 @@ theme = "@zsea"
 copyright = "© Copyright 2025. All rights reserved."
 enableRobotsTXT = true
 timeZone = "Asia/Shanghai"
-googleAnalytics = "G-CD1V6LJ8FT"
+
 [params]
 
 avatar = "/favicon/logo.png"
