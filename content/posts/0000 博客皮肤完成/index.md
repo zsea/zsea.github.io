@@ -80,6 +80,7 @@ icon = 'icon-json' # 链接的图标
 ![](https://liveout.cn/wp-content/uploads/pic/background/2023/905.png)
 \{\{< /wall >\}\}
 ```
+> 上面的代码示例中，请去掉```\```号。
 
 > 短代码主要用于```markdown```文档中。
 
@@ -150,6 +151,13 @@ cascade:
 hugo --cleanDestinationDir
 hugo --gc
 ```
+
+## 内容列表显示
+
+在发布内容后，会自动更新到相关列表中，列表的排序按以下字段倒序：
+
+* weigth - 默认为0。权重大于```50```的文章会在列表的标题前显示```[置顶]```。
+* date
 
 # 其它问题
 
