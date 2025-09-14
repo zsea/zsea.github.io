@@ -1,0 +1,18 @@
+{{ define "main" }}
+
+<div class="details">
+  <div class="details-title">{{ .Title }}</div>
+  <hr class="divider" />
+  <div class="created">发表于：{{ .Date.Format "2006-01-02 15:04:05" }}</div>
+
+  <div class="content markdown-body">
+    {{ .Content }}
+    {{ if .Params.tags }}
+    <div class="terms">
+      {{ partial "terms.html" (dict "taxonomy" "tags" "page" . "name" "关键词") }}
+    </div>
+    {{ end }}
+  </div>
+
+</div>
+{{ end }}

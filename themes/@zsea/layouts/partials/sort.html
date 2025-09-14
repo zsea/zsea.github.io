@@ -1,0 +1,10 @@
+{{ $pagesWithWeight := slice }}
+{{ range .}}
+{{ $effectiveWeight := .Params.weight | default 0 }} <!-- 核心：为 nil 的 weight 提供默认值 0 -->
+{{ $pagesWithWeight = $pagesWithWeight | append (dict "Page" . "Weight" $effectiveWeight) }}
+{{ end }}
+{{ $sortedPages := slice }}
+{{ range sort $pagesWithWeight "Weight" "desc" }}
+{{ $sortedPages = $sortedPages | append .Page }}
+{{ end }}
+{{ return $sortedPages }}

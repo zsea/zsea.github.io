@@ -1,0 +1,30 @@
+{{ $currentPageNumber := .PageNumber }}
+{{ $totalPageNumber := .TotalPages }}
+{{ $minPageNumber := math.Sub .PageNumber 2 }}
+{{ $maxPageNumber := math.Add .PageNumber 2 }}
+{{ with .Prev }}
+<a href="{{ .URL }}" class="pager-item" title="上一页"><i class="iconfont icon-shangyiyehoutuifanhui"></i></a>
+{{ else }}
+<span class="pager-item pager-disabled"><i class="iconfont icon-shangyiyehoutuifanhui"></i></span>
+{{ end }}
+{{ range .Pagers }}
+{{ if eq $currentPageNumber .PageNumber }}
+<span class="pager-item pager-disabled">{{.PageNumber}}</span>
+{{ else if eq .PageNumber 1 }}
+<a href="{{ .URL }}" class="pager-item" title="第1页">1</a>
+{{ else if eq .PageNumber $totalPageNumber }}
+<a href="{{ .URL }}" class="pager-item" title="第{{.PageNumber}}页">{{.PageNumber}}</a>
+{{ else if and (eq .PageNumber 2) (ge $currentPageNumber 5) }}
+<span class="pager-item pager-ellipsis"><i class="iconfont icon-ellipsis"></i></span>
+{{ else if and (ge .PageNumber $minPageNumber) (le .PageNumber $maxPageNumber) }}
+<a href="{{ .URL }}" class="pager-item" title="第{{.PageNumber}}页">{{.PageNumber}}</a>
+{{ else if and (gt .PageNumber $maxPageNumber) (eq .PageNumber (math.Add $maxPageNumber 1)) }}
+<span class="pager-item pager-ellipsis"><i class="iconfont icon-ellipsis"></i></span>
+{{ else }}
+{{ end }}
+{{ end }}
+{{ with .Next }}
+<a href="{{ .URL }}" class="pager-item" title="下一页"><i class="iconfont icon-xiayiyeqianjinchakangengduo"></i></a>
+{{ else }}
+<span class="pager-item pager-disabled"><i class="iconfont icon-xiayiyeqianjinchakangengduo"></i></span>
+{{ end }}

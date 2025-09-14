@@ -1,0 +1,34 @@
+{{ define "main" }}
+<div class="page-moments">
+  {{ if .Content }}
+  <div class="moment-item">
+    <div class="moment-item-desc markdown-body">
+      {{ .Content }}
+    </div>
+  </div>
+  <div class="blank"></div>
+  {{ end }}
+  <div class="moments-body">
+    
+    {{ with .Pages.ByDate.Reverse }}
+    {{ $pageCount := len . }}
+    {{ range .GroupByDate "2006" }}
+    <h2>{{ .Key }} 年</h2>
+    {{ range .Pages }}
+    {{ $pageCount = math.Sub $pageCount 1 }}
+    <div class="moment-item">
+      <div class="moment-item-desc markdown-body">
+        {{ .Content }}
+      </div>
+      
+      <div class="moment-created" data-time="{{.Date.Unix}}">
+        
+      </div>
+    </div>
+    {{ if ge $pageCount 1}}<hr class="divider">{{ end }}
+    {{ end }}
+    {{ end }}
+    {{ end }}
+  </div>
+</div>
+{{ end }}

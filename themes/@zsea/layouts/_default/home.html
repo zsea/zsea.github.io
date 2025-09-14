@@ -1,0 +1,87 @@
+{{ define "main" }}
+{{ $section := .Site.GetPage "section" "products" }}
+{{ if and $section $section.Pages }}
+{{ $limitedPages := first 1 $section.Pages }}
+<div class="products">
+	<div class="product-body">
+		{{ $page := .Page }}
+		{{ range $limitedPages }}
+		{{ $product := . }}
+			<div class="product-item">
+				{{ with .Params.cover }}
+				<div class="product-item-summary-cover">
+					{{ $path := . }}
+					{{ $isRemote := or (strings.HasPrefix $path "http://") (strings.HasPrefix $path "https://") (strings.HasPrefix $path "/") (strings.HasPrefix $path "://") }}
+					{{- if not $isRemote -}}
+						{{  $path = urls.JoinPath (partial "url.html" $page) .  }}
+					{{- end -}}
+					<a href="{{ $product.RelPermalink }}"><img src="{{ $path }}" /></a>
+				</div>
+				{{ end }}
+				<div class="product-item-summary-text markdown-body">{{ .Summary }}
+				<p class="posts-item-summary-text-more"><a href="{{ .RelPermalink }}">&gt;&gt;&gt;查看产品信息&lt;&lt;&lt;</a></p>
+				 </div>
+			</div>
+		{{ end }}
+	</div>
+</div>
+{{ end }}
+{{ with .Content }}
+<div class="home-desc">
+	<div class="home-inner markdown-body">
+		{{ . }}
+	</div>
+
+</div>
+{{ end }}
+<div class="posts-body">
+	<div class="site-owner">
+		<div class="site-owner-box">
+			<div class="site-owner-avatar">
+				{{ with .Site.Params.avatar }}
+				<img src="{{ . }}" alt="网站头像" />
+				{{ else }}
+				<!-- 可选：显示一个默认头像或保持空白 -->
+				<img src="about:blank" alt="默认头像" />
+				{{ end }}
+			</div>
+			<div class="site-owner-name">
+				{{ .Site.Params.name }}
+			</div>
+			<div class="site-owner-desc">
+				{{ .Site.Params.desc }}
+			</div>
+			<hr class="divider" />
+			<div class="site-owner-menus">
+				{{ partial "menu.html" (dict "menuID" "tools" "page" . "target" "_blank") }}
+			</div>
+			<hr class="divider" />
+			{{ $momentsSection := .Site.GetPage "section" "moments" }}
+			<div class="site-owner-moments markdown-body">
+				{{ with $momentsSection }}
+				{{ if .Pages }}
+				<!-- 直接遍历 first 1 的结果 -->
+				{{ range first 1 .Pages.ByDate.Reverse }}
+				{{ .Content }}
+				{{ end }}
+				{{ else }}
+				<!-- 没有文章时，显示 section 的简介内容 -->
+				{{ .Content }}
+				{{ end }}
+				{{ else }}
+				<p>无动态</p>
+				{{ end }}
+			</div>
+		</div>
+	</div>
+	{{ $allPages := .Site.GetPage "section" "posts"}}
+	{{ $sortedPages := partial "sort.html" $allPages.Pages }}	
+	{{ if $sortedPages }}
+
+	<div class="posts">
+		{{ partial "posts.html" (first 3 $sortedPages) }}
+		<div class="show-all-link"><a href="/posts">查看所有文章</a> </div>
+	</div>
+	{{ end }}
+</div>
+{{ end }}

@@ -1,0 +1,33 @@
+{{ range . }}
+{{ $page := . }}
+<div class="posts-item">
+    <div class="posts-item-header">
+        <h2 class="posts-item-title">
+            <a href="{{ .RelPermalink }}">
+                {{ if gt .Params.weight 50 }}
+                <span class="pinned-badge">[置顶]</span>
+                {{ end }}
+                {{ .LinkTitle }}
+            </a>
+        </h2>
+        <hr class="divider" />
+        <div class="posts-item-created">发表于：{{ .Date.Format "2006年01月02日" }}</div>
+    </div>
+
+    <div class="posts-item-summary">
+        {{ with .Params.cover }}
+        <div class="posts-item-summary-cover">
+            {{ $path := . }}
+            {{ $isRemote := or (strings.HasPrefix $path "http://") (strings.HasPrefix $path "https://") (strings.HasPrefix $path "/") (strings.HasPrefix $path "://") }}
+            {{- if not $isRemote -}}
+                {{  $path = urls.JoinPath (partial "url.html" $page) .  }}
+            {{- end -}}
+            <img src="{{ $path }}" />
+        </div>
+        {{ end }}
+        <div class="posts-item-summary-text markdown-body">{{ .Summary }} <p class="posts-item-summary-text-more"><a
+                    href="{{ .RelPermalink }}">&gt;&gt;&gt;阅读全文&lt;&lt;&lt;</a></p>
+        </div>
+    </div>
+</div>
+{{ end }}

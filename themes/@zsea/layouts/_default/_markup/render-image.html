@@ -1,0 +1,6 @@
+{{ $path := .Destination }}
+{{ $isRemote := or (strings.HasPrefix $path "http://") (strings.HasPrefix $path "https://") (strings.HasPrefix $path "/") (strings.HasPrefix $path "://") }}
+{{- if not $isRemote -}}
+  {{  $path = urls.JoinPath (partial "url" .Page) .Destination  }}
+{{- end -}}
+<img src="{{ $path | safeURL }}" alt="{{ .Text }}" />

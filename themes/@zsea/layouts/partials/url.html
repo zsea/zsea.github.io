@@ -1,0 +1,9 @@
+{{ $url := "" }}
+{{ if .RelPermalink }}
+{{ $url = .RelPermalink }}
+{{ else if .Slug }}
+{{ $url = urls.JoinPath (partial "url.html" .Parent) .Slug}}
+{{ else if .File.Dir }}
+{{ $url = (urls.Parse (urls.JoinPath .Page.Site.BaseURL (strings.Replace .Page.File.Dir "\\" "/"))).RequestURI }}
+{{ end }}
+{{ return $url }}

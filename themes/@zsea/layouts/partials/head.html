@@ -1,0 +1,32 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ printf "%s | %s" .Title site.Title }}{{ end }}</title>
+{{ with site.Params.favicon }}<link rel="icon" type="image/x-icon" href="{{ . }}">{{ end }}
+{{ with site.Copyright }}
+<meta name="copyright" content="{{site.Copyright}}">{{ end }}
+{{ if .IsHome }}
+{{ with site.Params.keywords }}<meta name="keywords" content="{{site.Params.keywords}}">{{ end }}
+{{ with site.Params.description }}<meta name="description" content="{{site.Params.description}}">{{ end }}
+{{ end }}
+
+{{ if or .IsPage .IsSection }}
+    {{ $finalKeywords := "" }}
+
+    {{/* 优先检查 keywords 是否存在且非空 */}}
+    {{ with $.Params.keywords }}
+    {{ $finalKeywords = delimit . ", " }}
+    {{ else }}
+    {{/* 其次，检查 tags 是否存在且非空 */}}
+    {{ with $.Params.tags }}{{ $finalKeywords = delimit . ", " }}{{ end }}
+    {{ end }}
+
+    {{/* 如果最终关键词字符串非空，则输出 meta 标签 */}}
+    {{ if $finalKeywords }}
+    <meta name="keywords" content="{{ $finalKeywords }}">
+    {{ end }}
+    {{ with $.Params.description }}<meta name="description" content="{{$.Params.description}}">{{ end }}
+{{ end }}
+<meta name="robots" content="index,follow">
+{{ partialCached "head/css.html" . }}
+{{ partialCached "head/js.html" . }}
+{{ with $.File }}<meta name="file" content="{{ .Path }}" />{{ end }}

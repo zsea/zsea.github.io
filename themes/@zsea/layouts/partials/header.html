@@ -1,0 +1,14 @@
+<div class="site-header">
+	<div class="site-title">
+	{{ with .Page.Site.Params.logo }}
+		<img src="{{ . }}" class="site-title-logo" />
+	{{ end }}
+		<span class="site-title-text">{{ site.Title }}</span>
+	</div>
+	<div></div>
+	<div class="site-menus">
+		{{ partial "menu.html" (dict "menuID" "main" "page" .) }}
+	</div>
+</div>
+
+

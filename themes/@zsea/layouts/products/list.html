@@ -1,0 +1,37 @@
+{{ define "main" }}
+<div class="page-products">
+  {{ if .Content }}
+  <div class="list-content">
+    <div class="list-content-desc markdown-body">
+      <h1>{{ .Title }}</h1>
+      {{ .Content }}
+    </div>
+  </div>
+  <div class="blank"></div>
+  {{ end }}
+  <div class=".products-body">
+    {{ with .Paginator.Pages }}
+    {{ range . }}
+    <div class="products-item">
+      <div class="posts-item-summary">
+        {{ with .Params.cover }}
+        <div class="posts-item-summary-cover">
+          <img src="{{ . }}" />
+        </div>
+        {{ end }}
+        <div class="posts-item-summary-text markdown-body">{{ .Content }}
+        <p class="posts-item-summary-text-more"><a
+                    href="{{ .RelPermalink }}">&gt;&gt;&gt;查看产品信息&lt;&lt;&lt;</a></p>
+        </div>
+      </div>
+    </div>
+    {{ end }}
+    {{ end }}
+    {{ if or .Paginator.HasPrev .Paginator.HasNext }}
+    <div class="show-all-link">
+      {{ partial "pager.html" . }}
+    </div>
+    {{ end }}
+  </div>
+</div>
+{{ end }}

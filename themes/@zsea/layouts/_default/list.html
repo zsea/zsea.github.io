@@ -1,0 +1,24 @@
+{{ define "main" }}
+<div class="page-posts">
+  {{ if .Content }}
+  <div class="list-content">
+    <div class="list-content-desc markdown-body">
+      <h1>{{ .Title }}</h1>
+      {{ .Content }}
+    </div>
+  </div>
+  <div class="blank"></div>
+  {{ end }}
+  <div class="posts">
+    
+    {{ $sortedPages := partial "sort.html" .Pages }}
+    {{ $paginator := .Paginate $sortedPages }}
+    {{ partial "posts.html" $paginator.Pages }}
+    {{ if or $paginator.HasPrev $paginator.HasNext }}
+    <div class="show-all-link">
+      {{ partial "pager.html" $paginator }}
+    </div>
+    {{ end }}
+  </div>
+</div>
+{{ end }}

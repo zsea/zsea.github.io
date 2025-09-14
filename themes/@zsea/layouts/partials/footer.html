@@ -1,0 +1,17 @@
+<p>{{ .Site.Copyright }}</p>
+{{ with .Site.Params.icp }}
+<p><a href="https://beian.miit.gov.cn/#/Integrated/index" target="_blank">{{ . }}</a></p>
+{{ end }}
+{{ if not hugo.IsServer }}
+{{ with .Site.Config.Services.GoogleAnalytics.ID }}
+    <!-- 这里放置你的Google Analytics跟踪代码 -->
+    <!-- 示例：GA4 跟踪代码 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ . }}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '{{ . }}');
+    </script>
+{{ end }}
+{{ end }}
