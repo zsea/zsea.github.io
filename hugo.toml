@@ -7,7 +7,7 @@ enableRobotsTXT = true
 timeZone = "Asia/Shanghai"
 googleAnalytics = "G-CD1V6LJ8FT"
 [params]
-icons = "https://at.alicdn.com/t/c/font_5020669_vahvl9zr1gq.css"
+
 avatar = "/favicon/logo.png"
 name = "海海"
 desc = "软件开发初学者，爱好者。"
@@ -15,8 +15,8 @@ icp = "蜀ICP备2023031169号-1"
 logo = "/favicon/logo.png"
 favicon = "/favicon/favicon-32x32.png"
 
-description = "个人博客，计算机技术，软件开发，编码转换，JSON工具，JSON格式化，JSON比较"
-keywords = "个人博客，计算机技术，软件开发，编码转换，JSON工具，JSON格式化，JSON比较"
+description = "个人在计算机知识学习过程中的经验积累，开发的个人产品的发布，与同行学习交流。"
+keywords = "个人博客，计算机技术，软件开发，C/C++/Javascript/js/React，网络知识，逆向，千牛，微信"
 
 [pagination]
 pagerSize  = 10
@@ -69,7 +69,7 @@ icon = 'icon-xml'
 
 [[menus.tools]]
 name = 'JSON编辑器'
-url = '/json'
+url = 'https://jsoneditoronline.org/'
 weight = 2
 [menus.tools.params]
 icon = 'icon-json'
