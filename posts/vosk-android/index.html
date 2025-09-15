@@ -1,0 +1,203 @@
+<!doctype html><html lang=zh-cn dir=ltr><head><meta charset=utf-8><meta name=viewport content="width=device-width"><title>使用Vosk Model在安卓上开发语音识别APP | 海海杂说</title><link rel=icon type=image/x-icon href=/favicon/favicon-32x32.png><meta name=copyright content="© Copyright 2025. All rights reserved."><meta name=keywords content="Android,语音识别,语音转文本,Vosk"><meta name=description content="在Android APP中，使用Vosk实现语音转文本，并介绍麦克风权限申请流程。"><meta name=robots content="index,follow"><link rel=stylesheet href=/css/main.min.ded89dd886a36b12c82783a3397d0c85754be45d90ed2320b32fe86bfec89578.css integrity="sha256-3tid2IajaxLIJ4OjOX0MhXVL5F2Q7SMgsy/oa/7IlXg=" crossorigin=anonymous><link rel=stylesheet href=/css/github-markdown.min.ee481479a5f04c7d701db0c6200f10242416b3f4d2a3c073fdc6a09e145dccb8.css integrity="sha256-7kgUeaXwTH1wHbDGIA8QJCQWs/TSo8Bz/cagnhRdzLg=" crossorigin=anonymous><link rel=stylesheet href=/css/iconfont.min.daa5136180ec22c6e9c0b91c926f85d1272434432a6bbd6cb3a571743fdfeb08.css integrity="sha256-2qUTYYDsIsbpwLkckm+F0SckNEMqa71ss6VxdD/f6wg=" crossorigin=anonymous><script src=/js/dayjs.min.js></script><script src=/js/relativeTime.js></script><script src=/js/zh-cn.js></script><script src=/js/main.f131ccf6104a927521a409081c405198f6e1a22c1adeff2e4f0c4e55ad2e2f65.js integrity="sha256-8THM9hBKknUhpAkIHEBRmPbhoiwa3v8uTwxOVa0uL2U=" crossorigin=anonymous></script><meta name=file content="posts/0004 使用Vosk Model在安卓上开发语音识别APP/index.md"></head><body><header><div class=site-header><div class=site-title><img src=/favicon/logo.png class=site-title-logo>
+<span class=site-title-text>海海杂说</span></div><div></div><div class=site-menus><nav><ul><li><a href=/><i class="iconfont icon-home"></i>
+首页</a></li><li><a aria-current=true class=ancestor href=/posts/><i class="iconfont icon-medium"></i>
+博客</a></li><li><a href=/products/><i class="iconfont icon-chanpin"></i>
+产品</a></li><li><a href=/moments/><i class="iconfont icon-shejiaotubiao-02"></i>
+动态</a></li><li><a href=/about/><i class="iconfont icon-guanyuwomen"></i>
+关于</a></li></ul></nav></div></div></header><main><div class=details><div class=details-title>使用Vosk Model在安卓上开发语音识别APP</div><hr class=divider><div class=created>发表于：2025-09-15 23:48:53</div><div class="content markdown-body"><p><code>Vosk</code>有大模型和小模型两种，对应不同的使用场景。</p><p><strong>大模型</strong></p><p>大模型由于使用了先进的 AI 算法，所以要求的资源比较高，需要至少16GB的内存(RAM)，主要用于在服务器上进行高精度的转录。</p><p>最新的大模型大小约2GB。</p><p><strong>小模型</strong></p><p>小模型大小仅仅约50MB，运行时内存(RAM)大约需要300MB，非常适合移动应用程序上的有限任务。可以在智能手机、Raspberry Pi 上运行。</p><p><strong>当然也包括车机设备。</strong></p><h1 id=下载>下载</h1><p>你可以在官方网站上下载到Vosk的模型文件。</p><p>下载地址：<a href=https://alphacephei.com/vosk/models title target=_blank>https://alphacephei.com/vosk/models</a></p><blockquote><p>根据官方网站显示，Vosk提供了多种语言的版本，我们在这里需要找到中文的版本。</p></blockquote><p>由于我们的APP运行于车机设备上，在这里我们只需要下载小模型即可。直达地址：<a href=https://alphacephei.com/vosk/models/vosk-model-small-cn-0.22.zip title target=_blank>https://alphacephei.com/vosk/models/vosk-model-small-cn-0.22.zip</a></p><blockquote><p>你必须在使用前创建一个Android项目。</p></blockquote><p>下载好之后的文件是一个zip的压缩包，需要解压后放入到Android项目的assets目录，目录结构如下：</p><pre tabindex=0><code>app/src/main/assets/model-small-cn-0.22/am
+                                        conf
+                                        graph
+                                        ivector
+                                        README
+                                        uuid 
+</code></pre><p>在下载的包中是没有<code>uuid</code>这个文件里，可以手动创建一个，在里面写入一个字符串做为id，你可以使用guid程序生成一个。</p><h1 id=使用>使用</h1><h2 id=添加依赖>添加依赖</h2><p>在使用Vosk之前，需要先添加依赖包(SDK)，其封装了常用的功能，我们可以在Android上直接调用，简化开发工作量。</p><p>在Android Studio中，编辑文件build.gradle(位置：app/build.gradle)，在<code>dependencies</code>中加入以下内容：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-gradle data-lang=gradle><span style=display:flex><span>    implementation <span style=color:#e6db74>&#39;net.java.dev.jna:jna:5.13.0@aar&#39;</span>
+</span></span><span style=display:flex><span>    implementation <span style=color:#e6db74>&#39;com.alphacephei:vosk-android:0.3.47@aar&#39;</span>
+</span></span></code></pre></div><p>然后点击右上角的<code>Sync Now</code>，等待同步完成就可以在项目中使用了。</p><h2 id=添加权限申请>添加权限申请</h2><p>由于我们需要从麦克风接收语音数据，需要向用户申请麦克风使用权限。在<code>app/src/main/AndroidManifest.xml</code>文件中添加如下代码：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=display:flex><span><span style=color:#75715e>&lt;?xml version=&#34;1.0&#34; encoding=&#34;utf-8&#34;?&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>&lt;manifest</span> <span style=color:#a6e22e>xmlns:android=</span><span style=color:#e6db74>&#34;http://schemas.android.com/apk/res/android&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>xmlns:tools=</span><span style=color:#e6db74>&#34;http://schemas.android.com/tools&#34;</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&lt;uses-permission</span> <span style=color:#a6e22e>android:name=</span><span style=color:#e6db74>&#34;android.permission.RECORD_AUDIO&#34;</span> <span style=color:#f92672>/&gt;</span>
+</span></span><span style=display:flex><span>    ...
+</span></span><span style=display:flex><span><span style=color:#f92672>&lt;/manifest&gt;</span>
+</span></span></code></pre></div><blockquote><p>其中<code>&lt;uses-permission android:name="android.permission.RECORD_AUDIO" /></code>是我们新添加的代码。</p></blockquote><blockquote><p>在<code>Android 6.0+</code>以上的系统中，还需要在APP运行时动态申请权限，这个我们在后面会说。</p></blockquote><h2 id=ui设计>UI设计</h2><p>我们只是开发一个简单的Demo程序，就只设计了两个按钮（一个开始，一个停止），一个文本显示框（用来实时显示语音文本）。</p><p>在<code>layout</code>下，找到对应的<code>xml</code>文件，添加按钮和文本框的布局信息。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=display:flex><span><span style=color:#75715e>&lt;?xml version=&#34;1.0&#34; encoding=&#34;utf-8&#34;?&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>&lt;androidx.constraintlayout.widget.ConstraintLayout</span> <span style=color:#a6e22e>xmlns:android=</span><span style=color:#e6db74>&#34;http://schemas.android.com/apk/res/android&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>xmlns:app=</span><span style=color:#e6db74>&#34;http://schemas.android.com/apk/res-auto&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>xmlns:tools=</span><span style=color:#e6db74>&#34;http://schemas.android.com/tools&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>android:id=</span><span style=color:#e6db74>&#34;@+id/main&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>android:layout_width=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>android:layout_height=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>tools:context=</span><span style=color:#e6db74>&#34;.MainActivity&#34;</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>&lt;LinearLayout</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>android:layout_width=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>android:layout_height=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>android:orientation=</span><span style=color:#e6db74>&#34;vertical&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span>    ...
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&lt;LinearLayout</span>
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>android:layout_width=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>android:layout_height=</span><span style=color:#e6db74>&#34;40dp&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>android:orientation=</span><span style=color:#e6db74>&#34;horizontal&#34;</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>&lt;Button</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:layout_width=</span><span style=color:#e6db74>&#34;160dp&#34;</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:layout_height=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:enabled=</span><span style=color:#e6db74>&#34;true&#34;</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:id=</span><span style=color:#e6db74>&#34;@+id/btnOpenRec&#34;</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:text=</span><span style=color:#e6db74>&#34;开始语音识别&#34;</span> <span style=color:#f92672>/&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>&lt;Button</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:layout_width=</span><span style=color:#e6db74>&#34;160dp&#34;</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:layout_height=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:enabled=</span><span style=color:#e6db74>&#34;false&#34;</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:id=</span><span style=color:#e6db74>&#34;@+id/btnCloseRec&#34;</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:text=</span><span style=color:#e6db74>&#34;停止语音识别&#34;</span> <span style=color:#f92672>/&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&lt;/LinearLayout&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&lt;LinearLayout</span>
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>android:layout_width=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>android:layout_height=</span><span style=color:#e6db74>&#34;40dp&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>android:orientation=</span><span style=color:#e6db74>&#34;horizontal&#34;</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>&lt;TextView</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:layout_width=</span><span style=color:#e6db74>&#34;200dp&#34;</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:layout_height=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:gravity=</span><span style=color:#e6db74>&#34;center_vertical&#34;</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:text=</span><span style=color:#e6db74>&#34;接收到的数据&#34;</span> <span style=color:#f92672>/&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&lt;/LinearLayout&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&lt;LinearLayout</span>
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>android:layout_width=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>android:layout_height=</span><span style=color:#e6db74>&#34;wrap_content&#34;</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>&lt;EditText</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:id=</span><span style=color:#e6db74>&#34;@+id/txtReceiver&#34;</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:layout_width=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:layout_height=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:enabled=</span><span style=color:#e6db74>&#34;false&#34;</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:inputType=</span><span style=color:#e6db74>&#34;textMultiLine&#34;</span> <span style=color:#f92672>/&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&lt;/LinearLayout&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>&lt;/LinearLayout&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#f92672>&lt;/androidx.constraintlayout.widget.ConstraintLayout&gt;</span>
+</span></span></code></pre></div><blockquote><p>这里我们简单的使用了<code>LinearLayout</code>来布局。</p></blockquote><h2 id=功能实现>功能实现</h2><p><code>Vosk</code>使用的流程如下：</p><ol start=0><li>动态申请权限。</li><li>从APP中释放出模型文件，并初始化为SDK中的<code>Model</code>类。</li><li>使用前面创建的model做为参数创建一个<code>Recognizer</code>类。</li><li>使用<code>Recognizer</code>作为参数创建一个<code>SpeechService</code>。</li><li><code>SpeechService</code>调用<code>startListening</code>开始从麦克风接收语音数据。</li><li><code>SpeechService</code>在接收到文本数据后，调用回调函数，进入用户的代码。</li><li>用户根据状态和对应的文本进行相应的操作。</li></ol><p>在上面的流程中，提到了<code>Model</code>、<code>Recognizer</code>和<code>SpeechService</code>三个类，他们的作用如下表：</p><table><thead><tr><th>类名 / 对象</th><th>主要职责</th><th>关键说明</th></tr></thead><tbody><tr><td>Model</td><td>识别知识库​</td><td>包含识别一种特定语言所需的全部数据。不同的模型文件（如中文小模型、英文模型）对应不同的语言识别能力。</td></tr><tr><td>Recognizer</td><td>​​核心识别引擎</td><td>负责加载模型和执行语音转文本的算法。它接收音频数据，并输出识别结果。它的性能直接决定了识别的准确率和速度。</td></tr><tr><td>SpeechService</td><td>音频管理与调度器​</td><td>封装了音频录制的细节，管理录音生命周期，并作为Recognizer和音频输入硬件之间的桥梁。它简化了识别流程的使用。</td></tr></tbody></table><h3 id=动态权限申请>动态权限申请</h3><p>在用户点击按钮<strong>btnOpenRec</strong>后，我们打开麦克风开始识别用户输入的语音信号前，需要先判断APP是否有使用麦克风的权限，如果没有，则需要申请麦克风权限，如果有的话，就可以直接开始进行语音识别。</p><blockquote><p>申请权限是一个异步操作，一般是将需要<em><strong>使用</strong></em>权限的功能封装为一个单独的功能函数，在调用这个功能函数前先判断是否有权限，如果有权限则直接调用，如果没用，则进行权限申请，当申请权限成功后，再次调用封装的功能函数。</p></blockquote><p>检查权限，需要使用<code>ContextCompat.checkSelfPermission</code>，如果具有权限，则会返回<code>PackageManager.PERMISSION_GRANTED</code>，只要不是这个值，就没有权限，我们这里不做细分，直接进入权限申请流程。</p><p>申请权限，需要使用<code>ActivityCompat.requestPermissions</code>，在申请权限的时候，可以一次性申请多个权限，以数组作为参数传入。同时，我们在申请权限的时候还需要传入一个请求码，用于授权完成后的回调。</p><p>当用户确认授权后，会调用<code>onRequestPermissionsResult</code>，我们需要在这里判断请求码和授权结果进行不同的操作。</p><table><thead><tr><th>方法名</th><th>所属类</th><th>核心作用</th><th>关键参数</th></tr></thead><tbody><tr><td>ContextCompat.checkSelfPermission</td><td>ContextCompat</td><td>检查​​是否拥有某个权限</td><td>Context context, String permission</td></tr><tr><td>ActivityCompat.requestPermissions</td><td>ActivityCompat</td><td>​​请求​​用户授予某个或多个权限</td><td>Activity activity, String[] permissions, int requestCode</td></tr><tr><td>onRequestPermissionsResult</td><td>Activity/Fragment</td><td>处理​​权限请求的结果</td><td>int requestCode, String[] permissions, int[] grantResults</td></tr></tbody></table><p>下面是我们权限检查申请的具体实现：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span>    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>final</span> String PERMISSIONS_RECORD_AUDIO <span style=color:#f92672>=</span>Manifest.<span style=color:#a6e22e>permission</span>.<span style=color:#a6e22e>RECORD_AUDIO</span>;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>int</span> RECORD_AUDIO_PERMISSION_REQUEST_CODE <span style=color:#f92672>=</span> 308; <span style=color:#75715e>// 唯一的请求码</span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e>/**
+</span></span></span><span style=display:flex><span><span style=color:#75715e>     * 检查权限，如果未授予则请求权限
+</span></span></span><span style=display:flex><span><span style=color:#75715e>     */</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>boolean</span> <span style=color:#a6e22e>checkAndRequestPermissions</span>() {
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// 检查是否已拥有所有需要的权限</span>
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span> ((ContextCompat.<span style=color:#a6e22e>checkSelfPermission</span>(<span style=color:#66d9ef>this</span>, PERMISSIONS_RECORD_AUDIO) <span style=color:#f92672>!=</span> PackageManager.<span style=color:#a6e22e>PERMISSION_GRANTED</span>)) {
+</span></span><span style=display:flex><span>            <span style=color:#75715e>// 如果没有所有权限，则请求它们</span>
+</span></span><span style=display:flex><span>            ActivityCompat.<span style=color:#a6e22e>requestPermissions</span>(<span style=color:#66d9ef>this</span>, <span style=color:#66d9ef>new</span> String<span style=color:#f92672>[]</span>{PERMISSIONS_RECORD_AUDIO}, RECORD_AUDIO_PERMISSION_REQUEST_CODE);
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>false</span>;
+</span></span><span style=display:flex><span>        } <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>            <span style=color:#75715e>// 所有权限都已授予，可以执行需要权限的操作</span>
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>true</span>;
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e>/**
+</span></span></span><span style=display:flex><span><span style=color:#75715e>     * 处理权限请求结果
+</span></span></span><span style=display:flex><span><span style=color:#75715e>     */</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>@Override</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>onRequestPermissionsResult</span>(<span style=color:#66d9ef>int</span> requestCode, <span style=color:#a6e22e>@NonNull</span> String<span style=color:#f92672>[]</span> permissions, <span style=color:#a6e22e>@NonNull</span> <span style=color:#66d9ef>int</span><span style=color:#f92672>[]</span> grantResults) {
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>super</span>.<span style=color:#a6e22e>onRequestPermissionsResult</span>(requestCode, permissions, grantResults);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// 检查收到的响应是否对应我们的请求</span>
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span> (requestCode <span style=color:#f92672>==</span> RECORD_AUDIO_PERMISSION_REQUEST_CODE) {
+</span></span><span style=display:flex><span>            <span style=color:#75715e>// 检查所有权限是否都被授予，我们这里只使用了一个权限。</span>
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>boolean</span> allGranted <span style=color:#f92672>=</span> <span style=color:#66d9ef>true</span>;
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> grantResult : grantResults) {
+</span></span><span style=display:flex><span>                <span style=color:#66d9ef>if</span> (grantResult <span style=color:#f92672>!=</span> PackageManager.<span style=color:#a6e22e>PERMISSION_GRANTED</span>) {
+</span></span><span style=display:flex><span>                    allGranted <span style=color:#f92672>=</span> <span style=color:#66d9ef>false</span>;
+</span></span><span style=display:flex><span>                    <span style=color:#66d9ef>break</span>;
+</span></span><span style=display:flex><span>                }
+</span></span><span style=display:flex><span>            }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>if</span> (allGranted) {
+</span></span><span style=display:flex><span>                <span style=color:#75715e>// 执行需要权限的操作，当前请求码对应的是开始识别语音</span>
+</span></span><span style=display:flex><span>                StartListening();
+</span></span><span style=display:flex><span>            } <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>                <span style=color:#75715e>// 至少有一个权限被拒绝</span>
+</span></span><span style=display:flex><span>                Toast.<span style=color:#a6e22e>makeText</span>(<span style=color:#66d9ef>this</span>,<span style=color:#e6db74>&#34;权限被拒绝，无法使用当前功能&#34;</span>,Toast.<span style=color:#a6e22e>LENGTH_SHORT</span>).<span style=color:#a6e22e>show</span>();
+</span></span><span style=display:flex><span>            }
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>    }
+</span></span></code></pre></div><h3 id=初始化model>初始化Model</h3><p>初始化就是将资源文件中的模型文件释放到存储空间上，再用路径作为参数来创建<code>Model</code>，我们使用SDK中提供的<code>StorageService.unpack </code>方法来释放。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span>    <span style=color:#66d9ef>private</span> Model model;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>void</span>  <span style=color:#a6e22e>InitVoskModel</span>(){
+</span></span><span style=display:flex><span>        StorageService.<span style=color:#a6e22e>unpack</span>(<span style=color:#66d9ef>this</span>, <span style=color:#e6db74>&#34;model-small-cn-0.22&#34;</span>, <span style=color:#e6db74>&#34;model&#34;</span>,
+</span></span><span style=display:flex><span>                (model) <span style=color:#f92672>-&gt;</span> {
+</span></span><span style=display:flex><span>                    <span style=color:#66d9ef>this</span>.<span style=color:#a6e22e>model</span> <span style=color:#f92672>=</span> model;
+</span></span><span style=display:flex><span>                    <span style=color:#75715e>//setUiState(STATE_READY);</span>
+</span></span><span style=display:flex><span>                    Toast.<span style=color:#a6e22e>makeText</span>(MainActivity.<span style=color:#a6e22e>this</span>, <span style=color:#e6db74>&#34;模型初始化成功&#34;</span>, Toast.<span style=color:#a6e22e>LENGTH_SHORT</span>).<span style=color:#a6e22e>show</span>();
+</span></span><span style=display:flex><span>                },
+</span></span><span style=display:flex><span>                (exception) <span style=color:#f92672>-&gt;</span> {
+</span></span><span style=display:flex><span>                    Log.<span style=color:#a6e22e>e</span>(<span style=color:#e6db74>&#34;MODEL&#34;</span>,exception.<span style=color:#a6e22e>toString</span>());
+</span></span><span style=display:flex><span>                    Toast.<span style=color:#a6e22e>makeText</span>(MainActivity.<span style=color:#a6e22e>this</span>, <span style=color:#e6db74>&#34;模型解包失败&#34;</span> <span style=color:#f92672>+</span> exception.<span style=color:#a6e22e>getMessage</span>(), Toast.<span style=color:#a6e22e>LENGTH_SHORT</span>).<span style=color:#a6e22e>show</span>();
+</span></span><span style=display:flex><span>                });
+</span></span><span style=display:flex><span>    }
+</span></span></code></pre></div><blockquote><p>我们在当前类中，定义了一个私有属性<code>model</code>，初始化可以在<code>onCreate</code>进行，整个生命周期中只需要初始化一次。</p></blockquote><h3 id=语音识别>语音识别</h3><p>我们将前面2、3、4整合到一个方法中。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span>    <span style=color:#66d9ef>private</span> SpeechService speechService;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>StartListening</span>(){
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span>(<span style=color:#66d9ef>this</span>.<span style=color:#a6e22e>model</span><span style=color:#f92672>==</span><span style=color:#66d9ef>null</span>){
+</span></span><span style=display:flex><span>            Toast.<span style=color:#a6e22e>makeText</span>(MainActivity.<span style=color:#a6e22e>this</span>, <span style=color:#e6db74>&#34;模型未初始化。&#34;</span>, Toast.<span style=color:#a6e22e>LENGTH_SHORT</span>).<span style=color:#a6e22e>show</span>();
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>return</span>;
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>try</span> {
+</span></span><span style=display:flex><span>            Recognizer recognizer <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> Recognizer(model, 16000.<span style=color:#a6e22e>0f</span>);
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>if</span>(speechService<span style=color:#f92672>==</span><span style=color:#66d9ef>null</span>) {
+</span></span><span style=display:flex><span>                speechService <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> SpeechService(recognizer, 16000.<span style=color:#a6e22e>0f</span>);
+</span></span><span style=display:flex><span>            }
+</span></span><span style=display:flex><span>            speechService.<span style=color:#a6e22e>startListening</span>(<span style=color:#66d9ef>this</span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        } <span style=color:#66d9ef>catch</span> (IOException e) {
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>            Toast.<span style=color:#a6e22e>makeText</span>(<span style=color:#66d9ef>this</span>,e.<span style=color:#a6e22e>getMessage</span>(),Toast.<span style=color:#a6e22e>LENGTH_SHORT</span>).<span style=color:#a6e22e>show</span>();
+</span></span><span style=display:flex><span>            e.<span style=color:#a6e22e>printStackTrace</span>();
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>return</span>;
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>        btnCloseRec.<span style=color:#a6e22e>setEnabled</span>(<span style=color:#66d9ef>true</span>);
+</span></span><span style=display:flex><span>        btnOpenRec.<span style=color:#a6e22e>setEnabled</span>(<span style=color:#66d9ef>false</span>);
+</span></span><span style=display:flex><span>    }
+</span></span></code></pre></div><blockquote><p>需要注意的是，在<code>Recognizer</code>和<code>SpeechService</code>的第二个参数是音频的采样率，两处需要保持一致。</p></blockquote><p>在这里，我们传入了<code>this</code>作为回调参数，这是一个<code>RecognitionListener</code>的接口，所以我们需要在当前类中实现接口函数。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>MainActivity</span> <span style=color:#66d9ef>extends</span> AppCompatActivity <span style=color:#66d9ef>implements</span> RecognitionListener {
+</span></span><span style=display:flex><span>    ...
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>private</span> String <span style=color:#a6e22e>getJsonField</span>(String text,String field){
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>try</span> {
+</span></span><span style=display:flex><span>            JSONObject jsonObject <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> JSONObject(text);
+</span></span><span style=display:flex><span>            String txt <span style=color:#f92672>=</span> jsonObject.<span style=color:#a6e22e>getString</span>(field);
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>return</span>  txt;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        } <span style=color:#66d9ef>catch</span> (JSONException e) {
+</span></span><span style=display:flex><span>            <span style=color:#75715e>// throw new RuntimeException(e);</span>
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>return</span> <span style=color:#e6db74>&#34;&#34;</span>;
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>@Override</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>onPartialResult</span>(String hypothesis) {
+</span></span><span style=display:flex><span>        String text<span style=color:#f92672>=</span>getJsonField(hypothesis,<span style=color:#e6db74>&#34;partial&#34;</span>);
+</span></span><span style=display:flex><span>        text <span style=color:#f92672>=</span> text.<span style=color:#a6e22e>replaceAll</span>(<span style=color:#e6db74>&#34;\\s+&#34;</span>, <span style=color:#e6db74>&#34;&#34;</span>);
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span>(<span style=color:#f92672>!</span>text.<span style=color:#a6e22e>isEmpty</span>()) txtReceiver.<span style=color:#a6e22e>setText</span>(text);
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>@Override</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>onResult</span>(String hypothesis) {
+</span></span><span style=display:flex><span>        String text<span style=color:#f92672>=</span>getJsonField(hypothesis,<span style=color:#e6db74>&#34;partial&#34;</span>);
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span>(<span style=color:#f92672>!</span>text.<span style=color:#a6e22e>isEmpty</span>()) txtReceiver.<span style=color:#a6e22e>setText</span>(text);
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>@Override</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>onFinalResult</span>(String hypothesis) {
+</span></span><span style=display:flex><span>        String text<span style=color:#f92672>=</span>getJsonField(hypothesis,<span style=color:#e6db74>&#34;text&#34;</span>);
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span>(<span style=color:#f92672>!</span>text.<span style=color:#a6e22e>isEmpty</span>()) txtReceiver.<span style=color:#a6e22e>setText</span>(text);
+</span></span><span style=display:flex><span>        btnCloseRec.<span style=color:#a6e22e>callOnClick</span>();
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>@Override</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>onError</span>(Exception exception) {
+</span></span><span style=display:flex><span>        btnCloseRec.<span style=color:#a6e22e>callOnClick</span>();
+</span></span><span style=display:flex><span>        Toast.<span style=color:#a6e22e>makeText</span>(<span style=color:#66d9ef>this</span>,exception.<span style=color:#a6e22e>getMessage</span>(),Toast.<span style=color:#a6e22e>LENGTH_SHORT</span>);
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>@Override</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>onTimeout</span>() {
+</span></span><span style=display:flex><span>        btnCloseRec.<span style=color:#a6e22e>callOnClick</span>();
+</span></span><span style=display:flex><span>        Toast.<span style=color:#a6e22e>makeText</span>(<span style=color:#66d9ef>this</span>,<span style=color:#e6db74>&#34;超时错误。&#34;</span>,Toast.<span style=color:#a6e22e>LENGTH_SHORT</span>);
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>    ...
+</span></span><span style=display:flex><span>}    
+</span></span></code></pre></div><p>作为文本处理，主要关注<code>onPartialResult</code>、<code>onResult</code>、<code>onFinalResult</code>。</p><p>这三个方法中，参数<code>hypothesis</code>是一个JSON字符串，其中包含了<code>partial</code>和<code>text</code>两个字段，partial是实时的语音识别结果，text是最终的语音识别的结果。</p><ul><li>onPartialResult - 实时输入识别结果，一般用于一边说话一边显示文字。</li><li>onResult - 在检测到用户停顿后调用。</li><li>onFinalResult - 音频结束后调用。</li></ul><p>语音输入中，一般将onResult的结果作为完整指令。</p><h1 id=结束>结束</h1><p>模型的使用其实就是按步就班的按照文档进行调用即可，我们开发的时候主要处理的是各种异步，并给用户一个友好的输入窗口。</p><p>好了，还是贴个图吧。</p><p><img src=/posts/vosk-android/1.png alt=Demo图></p></div></div></main><footer><p>© Copyright 2025. All rights reserved.</p><p><a href=https://beian.miit.gov.cn/#/Integrated/index target=_blank>蜀ICP备2023031169号-1</a></p></footer></body></html>
