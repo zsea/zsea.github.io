@@ -313,7 +313,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     @Override
     public void onResult(String hypothesis) {
-        String text=getJsonField(hypothesis,"partial");
+        String text=getJsonField(hypothesis,"text");
         if(!text.isEmpty()) txtReceiver.setText(text);
     }
 
