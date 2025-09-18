@@ -1,7 +1,7 @@
 +++
 title = 'JNI极速入门'
 date = 2025-09-18T19:56:38+08:00
-draft = true
+draft = false
 slug = 'jni'
 description ='JNI极速入门，JNI学习笔记，Java Native Interface，对JNI使用方法的学习'
 keywords =['JNI','Java Native Interface']
