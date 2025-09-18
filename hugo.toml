@@ -1,4 +1,4 @@
-baseURL = '/'
+baseURL = 'https://www.lsz.sc.cn/'
 languageCode = 'zh-cn'
 title = '海海杂说'
 theme = "@zsea"
