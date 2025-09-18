@@ -46,6 +46,10 @@ main{
 	height: 48px;
 	display: flex;
 	align-items: center;
+	text-decoration: none;
+}
+.site-title:hover{
+	text-decoration: none;
 }
 
 .site-title-logo {

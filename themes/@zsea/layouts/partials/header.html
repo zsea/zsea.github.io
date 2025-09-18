@@ -1,10 +1,10 @@
 <div class="site-header">
-	<div class="site-title">
+	<a href="{{ .Page.Site.BaseURL }}" class="site-title">
 	{{ with .Page.Site.Params.logo }}
 		<img src="{{ . }}" class="site-title-logo" />
 	{{ end }}
-		<span class="site-title-text">{{ site.Title }}</span>
-	</div>
+		<span class="site-title-text">{{ .Page.Site.Title }}</span>
+	</a>
 	<div></div>
 	<div class="site-menus">
 		{{ partial "menu.html" (dict "menuID" "main" "page" .) }}
