@@ -1,0 +1,300 @@
+<!doctype html><html lang=zh-cn dir=ltr><head><meta charset=utf-8><meta name=viewport content="width=device-width"><title>[Android开发]摄像头使用 | 海海杂说</title><link rel=icon type=image/x-icon href=/favicon/favicon-32x32.png><meta name=copyright content="© Copyright 2025. All rights reserved."><meta name=keywords content="Android,Java,摄像头,CameraX"><meta name=description content="Android开发，摄像头使用"><meta name=robots content="index,follow"><link rel=stylesheet href=/css/main.min.35a7abc091a1d79e46a23cb955fc57b51ed11de714d3d4d9635b95dd2cc271a5.css integrity="sha256-NaerwJGh155Gojy5VfxXtR7RHecU09TZY1uV3SzCcaU=" crossorigin=anonymous><link rel=stylesheet href=/css/github-markdown.min.ee481479a5f04c7d701db0c6200f10242416b3f4d2a3c073fdc6a09e145dccb8.css integrity="sha256-7kgUeaXwTH1wHbDGIA8QJCQWs/TSo8Bz/cagnhRdzLg=" crossorigin=anonymous><link rel=stylesheet href=/css/iconfont.min.daa5136180ec22c6e9c0b91c926f85d1272434432a6bbd6cb3a571743fdfeb08.css integrity="sha256-2qUTYYDsIsbpwLkckm+F0SckNEMqa71ss6VxdD/f6wg=" crossorigin=anonymous><script src=/js/dayjs.min.js></script><script src=/js/relativeTime.js></script><script src=/js/zh-cn.js></script><script src=/js/main.f131ccf6104a927521a409081c405198f6e1a22c1adeff2e4f0c4e55ad2e2f65.js integrity="sha256-8THM9hBKknUhpAkIHEBRmPbhoiwa3v8uTwxOVa0uL2U=" crossorigin=anonymous></script><meta name=file content="posts/0006 Android开发 摄像头使用/index.md"></head><body><header><div class=site-header><a href=https://www.lsz.sc.cn/ class=site-title><img src=/favicon/logo.png class=site-title-logo>
+<span class=site-title-text>海海杂说</span></a><div></div><div class=site-menus><nav><ul><li><a href=/><i class="iconfont icon-home"></i>
+首页</a></li><li><a aria-current=true class=ancestor href=/posts/><i class="iconfont icon-medium"></i>
+博客</a></li><li><a href=/products/><i class="iconfont icon-chanpin"></i>
+产品</a></li><li><a href=/moments/><i class="iconfont icon-shejiaotubiao-02"></i>
+动态</a></li><li><a href=/about/><i class="iconfont icon-guanyuwomen"></i>
+关于</a></li></ul></nav></div></div></header><main><div class=details><div class=details-title>[Android开发]摄像头使用</div><hr class=divider><div class=created>发表于：2025-09-21 23:02:22</div><div class="content markdown-body"><blockquote><p>本篇是<code>Android</code>开发疲劳驾驶、人脸识别的基础篇。</p></blockquote><p>在Android中，对摄像头的使用，主要依赖<code>CameraX</code>，我们将根据摄像头使用的范式(三板斧)来完成功能。</p><p>画面数据由摄像头产生后，经过<code>SurfaceTexture</code>，最终显示在<code>View</code>上，摄像头是硬件，会将产生的数据以帧的形式推送到<code>SurfaceTexture</code>，<code>SurfaceTexture</code>会不断的将数据显示在<code>View</code>，但是并不一定会将每一帧都显示出来，每次显示的时候，都会显示最新的帧，过期的帧会被舍弃。</p><p>上面介绍了数据产生到显示的步骤，下面我们将按照步骤一步一步实现功能：</p><ol><li>在UI上显示摄像头画面</li><li>在摄像头画面画上框 - 该功能实际是要根据检测到的人脸所在位置画框，这里暂时没有实现人脸检测。</li></ol><h1 id=依赖项>依赖项</h1><p><code>CameraX</code>当前的最新版为<strong>1.5.0</strong>，我们这里由于Android Studio版本较低，不能安装高版本的AGP，所以选择了较低的版本。我们的版本是<strong>1.3.4</strong>。</p><blockquote><p><code>CameraX</code>的最版本版本可以通过<a href="https://developer.android.com/jetpack/androidx/releases/camera?hl=zh-cn#1.3.4" title target=_blank>https://developer.android.com/jetpack/androidx/releases/camera?hl=zh-cn#1.3.4</a>查询。</p></blockquote><p>在<code>build.gradle</code>中添加以下代码到<code>dependencies</code>中，完成依赖项的设置。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-gradle data-lang=gradle><span style=display:flex><span>dependencies <span style=color:#f92672>{</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>...</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>def</span> camerax_version <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;1.3.4&#34;</span>
+</span></span><span style=display:flex><span>    implementation <span style=color:#e6db74>&#34;androidx.camera:camera-core:${camerax_version}&#34;</span>
+</span></span><span style=display:flex><span>    implementation <span style=color:#e6db74>&#34;androidx.camera:camera-camera2:${camerax_version}&#34;</span>
+</span></span><span style=display:flex><span>    implementation <span style=color:#e6db74>&#34;androidx.camera:camera-lifecycle:${camerax_version}&#34;</span>
+</span></span><span style=display:flex><span>    implementation <span style=color:#e6db74>&#34;androidx.camera:camera-video:${camerax_version}&#34;</span>
+</span></span><span style=display:flex><span>    implementation <span style=color:#e6db74>&#34;androidx.camera:camera-view:${camerax_version}&#34;</span>
+</span></span><span style=display:flex><span>    implementation <span style=color:#e6db74>&#34;androidx.camera:camera-extensions:${camerax_version}&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>...</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>}</span>
+</span></span></code></pre></div><hr><h1 id=功能实现>功能实现</h1><blockquote><p>我们先完成功能一。</p></blockquote><p>在UI上，我们设计一个按钮，用于开启功能。</p><ol><li>添加UI</li></ol><p>按钮就使用一个普通的按钮，摄像头数据显示则使用<code>CameraX</code>提供的<code>androidx.camera.view.PreviewView</code>类。UI布局如下：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=display:flex><span><span style=color:#75715e>&lt;?xml version=&#34;1.0&#34; encoding=&#34;utf-8&#34;?&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>&lt;androidx.constraintlayout.widget.ConstraintLayout</span> <span style=color:#a6e22e>xmlns:android=</span><span style=color:#e6db74>&#34;http://schemas.android.com/apk/res/android&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>xmlns:app=</span><span style=color:#e6db74>&#34;http://schemas.android.com/apk/res-auto&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>xmlns:tools=</span><span style=color:#e6db74>&#34;http://schemas.android.com/tools&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>android:id=</span><span style=color:#e6db74>&#34;@+id/main&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>android:layout_width=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>android:layout_height=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>tools:context=</span><span style=color:#e6db74>&#34;.CameraActivity&#34;</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&lt;LinearLayout</span>
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>android:layout_width=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>android:layout_height=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>android:orientation=</span><span style=color:#e6db74>&#34;vertical&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>&lt;LinearLayout</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:layout_width=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:layout_height=</span><span style=color:#e6db74>&#34;40dp&#34;</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:orientation=</span><span style=color:#e6db74>&#34;horizontal&#34;</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>            <span style=color:#f92672>&lt;Button</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>android:layout_width=</span><span style=color:#e6db74>&#34;160dp&#34;</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>android:layout_height=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>android:enabled=</span><span style=color:#e6db74>&#34;true&#34;</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>android:id=</span><span style=color:#e6db74>&#34;@+id/btnOpenCamera&#34;</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>android:text=</span><span style=color:#e6db74>&#34;打开摄像头&#34;</span> <span style=color:#f92672>/&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>&lt;/LinearLayout&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>&lt;FrameLayout</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:layout_width=</span><span style=color:#e6db74>&#34;480dp&#34;</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:layout_height=</span><span style=color:#e6db74>&#34;640dp&#34;</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span>            <span style=color:#f92672>&lt;androidx.camera.view.PreviewView</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>android:id=</span><span style=color:#e6db74>&#34;@+id/previewView&#34;</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>android:layout_width=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>android:layout_height=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>app:layout_constraintBottom_toBottomOf=</span><span style=color:#e6db74>&#34;parent&#34;</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>app:layout_constraintEnd_toEndOf=</span><span style=color:#e6db74>&#34;parent&#34;</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>app:layout_constraintStart_toStartOf=</span><span style=color:#e6db74>&#34;parent&#34;</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>app:layout_constraintTop_toTopOf=</span><span style=color:#e6db74>&#34;parent&#34;</span> <span style=color:#f92672>/&gt;</span>
+</span></span><span style=display:flex><span>            
+</span></span><span style=display:flex><span>        <span style=color:#f92672>&lt;/FrameLayout&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&lt;/LinearLayout&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>&lt;/androidx.constraintlayout.widget.ConstraintLayout&gt;</span>
+</span></span></code></pre></div><p>这里使用了<code>FrameLayout</code>，便于后期绘制方框。</p><ol start=2><li>权限申请</li></ol><blockquote><p>根据设计，在用户点击按钮<code>btnOpenCamera</code>就需要打开摄像头显示数据，但在正式使用摄像头前，需要检查和申请摄像头的权限。</p></blockquote><p>权限的申请需要先在<code>AndroidManifest.xml</code>添加使用的权限列表，然后再动态申请，具体请参考<a href=../vosk-android/ title target=_blank>使用Vosk Model在安卓上开发语音识别APP</a>。</p><p>在<code>AndroidManifest.xml</code>中添加以下内容：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=display:flex><span><span style=color:#f92672>&lt;uses-feature</span>
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>android:name=</span><span style=color:#e6db74>&#34;android.hardware.camera&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>android:required=</span><span style=color:#e6db74>&#34;false&#34;</span> <span style=color:#f92672>/&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&lt;uses-permission</span> <span style=color:#a6e22e>android:name=</span><span style=color:#e6db74>&#34;android.permission.RECORD_AUDIO&#34;</span> <span style=color:#f92672>/&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&lt;uses-permission</span> <span style=color:#a6e22e>android:name=</span><span style=color:#e6db74>&#34;android.permission.CAMERA&#34;</span> <span style=color:#f92672>/&gt;</span>
+</span></span></code></pre></div><p>在<code>CameraActivity</code>类中添加以下权限申请代码：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>CameraActivity</span> <span style=color:#66d9ef>extends</span> AppCompatActivity {
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>int</span> REQUEST_CODE_PERMISSIONS <span style=color:#f92672>=</span> 101;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> String<span style=color:#f92672>[]</span> REQUIRED_PERMISSIONS <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> String<span style=color:#f92672>[]</span>{android.<span style=color:#a6e22e>Manifest</span>.<span style=color:#a6e22e>permission</span>.<span style=color:#a6e22e>CAMERA</span>, Manifest.<span style=color:#a6e22e>permission</span>.<span style=color:#a6e22e>RECORD_AUDIO</span>};
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>boolean</span> <span style=color:#a6e22e>checkAndRequestPermissions</span>(){
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>for</span> (String permission : REQUIRED_PERMISSIONS) {
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>if</span> (ContextCompat.<span style=color:#a6e22e>checkSelfPermission</span>(<span style=color:#66d9ef>this</span>, permission) <span style=color:#f92672>!=</span> PackageManager.<span style=color:#a6e22e>PERMISSION_GRANTED</span>) {
+</span></span><span style=display:flex><span>                ActivityCompat.<span style=color:#a6e22e>requestPermissions</span>(<span style=color:#66d9ef>this</span>,REQUIRED_PERMISSIONS,REQUEST_CODE_PERMISSIONS);
+</span></span><span style=display:flex><span>                <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>false</span>;
+</span></span><span style=display:flex><span>            }
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>true</span>;
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>@Override</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>onRequestPermissionsResult</span>(<span style=color:#66d9ef>int</span> requestCode,String<span style=color:#f92672>[]</span> permissions,<span style=color:#66d9ef>int</span><span style=color:#f92672>[]</span> grantResults) {
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>super</span>.<span style=color:#a6e22e>onRequestPermissionsResult</span>(requestCode, permissions, grantResults);
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span>(requestCode<span style=color:#f92672>==</span>REQUEST_CODE_PERMISSIONS){
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>boolean</span> grantAll<span style=color:#f92672>=</span><span style=color:#66d9ef>true</span>;
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>for</span>(<span style=color:#66d9ef>int</span> grant:grantResults){
+</span></span><span style=display:flex><span>                <span style=color:#66d9ef>if</span>(grant<span style=color:#f92672>!=</span>PackageManager.<span style=color:#a6e22e>PERMISSION_GRANTED</span>){
+</span></span><span style=display:flex><span>                    grantAll<span style=color:#f92672>=</span><span style=color:#66d9ef>false</span>;
+</span></span><span style=display:flex><span>                    <span style=color:#66d9ef>break</span>;
+</span></span><span style=display:flex><span>                }
+</span></span><span style=display:flex><span>            }
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>if</span>(<span style=color:#f92672>!</span>grantAll){
+</span></span><span style=display:flex><span>                Toast.<span style=color:#a6e22e>makeText</span>(<span style=color:#66d9ef>this</span>,<span style=color:#e6db74>&#34;权限不完整，无法开启该功能。&#34;</span>,Toast.<span style=color:#a6e22e>LENGTH_SHORT</span>).<span style=color:#a6e22e>show</span>();
+</span></span><span style=display:flex><span>            }
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>                StartCamera();
+</span></span><span style=display:flex><span>            }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><blockquote><p>在这里，同时也申请了录音的权限，因为大多数时候摄像和录音是同时进行的。</p></blockquote><ol start=3><li>显示摄像头数据</li></ol><p>在申请权限成功后，会调用函数<code>StartCamera()</code>开始摄像头数据显示，在这里，会开始我们使用摄像头的固定模式。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span>    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>StartCamera</span>(){
+</span></span><span style=display:flex><span>        
+</span></span><span style=display:flex><span>        ListenableFuture<span style=color:#f92672>&lt;</span>ProcessCameraProvider<span style=color:#f92672>&gt;</span> cameraProviderFuture<span style=color:#f92672>=</span> ProcessCameraProvider.<span style=color:#a6e22e>getInstance</span>(<span style=color:#66d9ef>this</span>);
+</span></span><span style=display:flex><span>        cameraProviderFuture.<span style=color:#a6e22e>addListener</span>(()<span style=color:#f92672>-&gt;</span>{
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>try</span> {
+</span></span><span style=display:flex><span>                <span style=color:#75715e>// Future 完成后，通过 get() 方法获取 ProcessCameraProvider 实例</span>
+</span></span><span style=display:flex><span>                cameraProvider <span style=color:#f92672>=</span> cameraProviderFuture.<span style=color:#a6e22e>get</span>();
+</span></span><span style=display:flex><span>                <span style=color:#75715e>// 调用 bindPreview 来设置和绑定相机用例</span>
+</span></span><span style=display:flex><span>                bindPreview();
+</span></span><span style=display:flex><span>            } <span style=color:#66d9ef>catch</span> (ExecutionException <span style=color:#f92672>|</span> InterruptedException <span style=color:#f92672>|</span> CameraInfoUnavailableException e) {
+</span></span><span style=display:flex><span>                <span style=color:#75715e>// 错误处理</span>
+</span></span><span style=display:flex><span>                Log.<span style=color:#a6e22e>e</span>(TAG, <span style=color:#e6db74>&#34;获取 CameraProvider 失败&#34;</span>, e);
+</span></span><span style=display:flex><span>                <span style=color:#75715e>//Toast.makeText(this, &#34;没有可用的摄像头&#34;, Toast.LENGTH_SHORT).show();</span>
+</span></span><span style=display:flex><span>            }
+</span></span><span style=display:flex><span>        }, ContextCompat.<span style=color:#a6e22e>getMainExecutor</span>(<span style=color:#66d9ef>this</span>));
+</span></span><span style=display:flex><span>    }
+</span></span></code></pre></div><p>通过<code>ProcessCameraProvider</code>获取一个<code>ListenableFuture&lt;ProcessCameraProvider></code>，并在<code>CameraProvider</code>准备好后开始显示数据。这里是调用<code>bindPreview()</code>。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span>    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>bindPreview</span>() <span style=color:#66d9ef>throws</span> CameraInfoUnavailableException {
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span> (cameraProvider <span style=color:#f92672>==</span> <span style=color:#66d9ef>null</span>) {
+</span></span><span style=display:flex><span>            Log.<span style=color:#a6e22e>e</span>(TAG, <span style=color:#e6db74>&#34;CameraProvider 未初始化&#34;</span>);
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>return</span>;
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// 1. 除除掉以前的摄像头绑定。</span>
+</span></span><span style=display:flex><span>        cameraProvider.<span style=color:#a6e22e>unbindAll</span>();
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// 2. 构造一个摄像头数据配置，这里设置了图像大小为480x640。</span>
+</span></span><span style=display:flex><span>        preview <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> Preview.<span style=color:#a6e22e>Builder</span>().<span style=color:#a6e22e>setTargetResolution</span>(<span style=color:#66d9ef>new</span> Size(480, 640)).<span style=color:#a6e22e>build</span>();
+</span></span><span style=display:flex><span>        <span style=color:#75715e>/**
+</span></span></span><span style=display:flex><span><span style=color:#75715e>         * 3. 构造摄像头参数
+</span></span></span><span style=display:flex><span><span style=color:#75715e>         *  requireLensFacing - 用于设置使用哪个摄像头(前置/后置):CameraSelector.LENS_FACING_BACK/CameraSelector.LENS_FACING_FRONT
+</span></span></span><span style=display:flex><span><span style=color:#75715e>         */</span>
+</span></span><span style=display:flex><span>        CameraSelector cameraSelector<span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> CameraSelector.<span style=color:#a6e22e>Builder</span>()
+</span></span><span style=display:flex><span>                .<span style=color:#a6e22e>requireLensFacing</span>(<span style=color:#66d9ef>this</span>.<span style=color:#a6e22e>lensFacing</span>)
+</span></span><span style=display:flex><span>                .<span style=color:#a6e22e>build</span>();
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// 4. 将preview的数据对接到previewView</span>
+</span></span><span style=display:flex><span>        preview.<span style=color:#a6e22e>setSurfaceProvider</span>(previewView.<span style=color:#a6e22e>getSurfaceProvider</span>());
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>       cameraProvider.<span style=color:#a6e22e>bindToLifecycle</span>(<span style=color:#66d9ef>this</span>,cameraSelector,preview);
+</span></span><span style=display:flex><span>    }
+</span></span></code></pre></div><p>在这里，都是固定的步骤，已在代码中给出了详细的注释。</p><p>代码中<code>previewView</code>，就是我们前面<code>xml</code>中定义的<code>androidx.camera.view.PreviewView</code>实例。</p><p>测试效果如下，正确获取到摄像头数据。</p><p><img src=/posts/android-camerax/image.png alt="alt text"></p><hr><p>对于功能二，有两种方式：</p><ol><li>对每一帧进行处理，在每一帧的画面上画上框。</li><li>在<code>androidx.camera.view.PreviewView</code>上添加一个绘画层，用于绘制相关信息。</li></ol><p>从性能上来说，方式二更优，我们选择方式二。</p><ol><li>修改前面的布局文件：</li></ol><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=display:flex><span><span style=color:#75715e>&lt;?xml version=&#34;1.0&#34; encoding=&#34;utf-8&#34;?&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>&lt;androidx.constraintlayout.widget.ConstraintLayout</span> <span style=color:#a6e22e>xmlns:android=</span><span style=color:#e6db74>&#34;http://schemas.android.com/apk/res/android&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>xmlns:app=</span><span style=color:#e6db74>&#34;http://schemas.android.com/apk/res-auto&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>xmlns:tools=</span><span style=color:#e6db74>&#34;http://schemas.android.com/tools&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>android:id=</span><span style=color:#e6db74>&#34;@+id/main&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>android:layout_width=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>android:layout_height=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>tools:context=</span><span style=color:#e6db74>&#34;.CameraActivity&#34;</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&lt;LinearLayout</span>
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>android:layout_width=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>android:layout_height=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>android:orientation=</span><span style=color:#e6db74>&#34;vertical&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>&lt;LinearLayout</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:layout_width=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:layout_height=</span><span style=color:#e6db74>&#34;40dp&#34;</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:orientation=</span><span style=color:#e6db74>&#34;horizontal&#34;</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>            <span style=color:#f92672>&lt;Button</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>android:layout_width=</span><span style=color:#e6db74>&#34;160dp&#34;</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>android:layout_height=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>android:enabled=</span><span style=color:#e6db74>&#34;true&#34;</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>android:id=</span><span style=color:#e6db74>&#34;@+id/btnOpenCamera&#34;</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>android:text=</span><span style=color:#e6db74>&#34;打开摄像头&#34;</span> <span style=color:#f92672>/&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>&lt;/LinearLayout&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>&lt;FrameLayout</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:layout_width=</span><span style=color:#e6db74>&#34;480dp&#34;</span>
+</span></span><span style=display:flex><span>            <span style=color:#a6e22e>android:layout_height=</span><span style=color:#e6db74>&#34;640dp&#34;</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span>            <span style=color:#f92672>&lt;androidx.camera.view.PreviewView</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>android:id=</span><span style=color:#e6db74>&#34;@+id/previewView&#34;</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>android:layout_width=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>android:layout_height=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>app:layout_constraintBottom_toBottomOf=</span><span style=color:#e6db74>&#34;parent&#34;</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>app:layout_constraintEnd_toEndOf=</span><span style=color:#e6db74>&#34;parent&#34;</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>app:layout_constraintStart_toStartOf=</span><span style=color:#e6db74>&#34;parent&#34;</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>app:layout_constraintTop_toTopOf=</span><span style=color:#e6db74>&#34;parent&#34;</span> <span style=color:#f92672>/&gt;</span>
+</span></span><span style=display:flex><span>            <span style=color:#f92672>&lt;com.example.demo.DrawView</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>android:layout_width=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>android:layout_height=</span><span style=color:#e6db74>&#34;match_parent&#34;</span>
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>android:id=</span><span style=color:#e6db74>&#34;@+id/viewDrawer&#34;</span>
+</span></span><span style=display:flex><span>                <span style=color:#f92672>/&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>&lt;/FrameLayout&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&lt;/LinearLayout&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>&lt;/androidx.constraintlayout.widget.ConstraintLayout&gt;</span>
+</span></span></code></pre></div><p><code>com.example.demo.DrawView</code>是我们的一个自定义绘画<code>View</code>，通过它，我们能实现绘制我们想要的内容。</p><p>通过<code>FrameLayout</code>实现<code>com.example.demo.DrawView</code>位于<code>androidx.camera.view.PreviewView</code>的上层。</p><ol start=2><li>实现<code>com.example.demo.DrawView</code></li></ol><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#f92672>package</span> com.example.demo;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> android.content.Context;
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> android.graphics.Canvas;
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> android.graphics.Color;
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> android.graphics.Paint;
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> android.graphics.RectF;
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> android.util.AttributeSet;
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> android.view.View;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> androidx.annotation.NonNull;
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> androidx.annotation.Nullable;
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> androidx.camera.core.CameraSelector;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> java.util.ArrayList;
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> java.util.List;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>DrawView</span>  <span style=color:#66d9ef>extends</span> View {
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> Paint paint;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> List<span style=color:#f92672>&lt;</span>RectF<span style=color:#f92672>&gt;</span> rectBoxes <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> ArrayList<span style=color:#f92672>&lt;</span>RectF<span style=color:#f92672>&gt;</span>();
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// 图像源的尺寸，用于坐标转换</span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// 当前摄像头是否为前置摄像头，用于镜像翻转</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>int</span> lensFacing <span style=color:#f92672>=</span> CameraSelector.<span style=color:#a6e22e>LENS_FACING_BACK</span>;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>int</span> sourceWidth;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>int</span> sourceHeight;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> <span style=color:#a6e22e>DrawView</span>(Context context, <span style=color:#a6e22e>@Nullable</span> AttributeSet attrs) {
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>super</span>(context, attrs);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// 初始化画笔，用于绘制框</span>
+</span></span><span style=display:flex><span>        paint <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> Paint();
+</span></span><span style=display:flex><span>        paint.<span style=color:#a6e22e>setColor</span>(Color.<span style=color:#a6e22e>parseColor</span>(<span style=color:#e6db74>&#34;#42A5F5&#34;</span>)); <span style=color:#75715e>// 设置一个漂亮的蓝色</span>
+</span></span><span style=display:flex><span>        paint.<span style=color:#a6e22e>setStyle</span>(Paint.<span style=color:#a6e22e>Style</span>.<span style=color:#a6e22e>STROKE</span>); <span style=color:#75715e>// 设置为空心框</span>
+</span></span><span style=display:flex><span>        paint.<span style=color:#a6e22e>setStrokeWidth</span>(6.<span style=color:#a6e22e>0f</span>); <span style=color:#75715e>// 设置线宽</span>
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>    <span style=color:#75715e>/**
+</span></span></span><span style=display:flex><span><span style=color:#75715e>     * 从外部接收检测到的数据并触发重绘
+</span></span></span><span style=display:flex><span><span style=color:#75715e>     * @param boxes 需要画框的位置
+</span></span></span><span style=display:flex><span><span style=color:#75715e>     * @param sourceWidth 分析图像的宽度
+</span></span></span><span style=display:flex><span><span style=color:#75715e>     * @param sourceHeight 分析图像的高度
+</span></span></span><span style=display:flex><span><span style=color:#75715e>     * @param lensFacing 当前相机的朝向 (前置/后置)
+</span></span></span><span style=display:flex><span><span style=color:#75715e>     */</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>updateBoxes</span>(List<span style=color:#f92672>&lt;</span>RectF<span style=color:#f92672>&gt;</span> boxes, <span style=color:#66d9ef>int</span> sourceWidth, <span style=color:#66d9ef>int</span> sourceHeight, <span style=color:#66d9ef>int</span> lensFacing) {
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>this</span>.<span style=color:#a6e22e>sourceWidth</span> <span style=color:#f92672>=</span> sourceWidth;
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>this</span>.<span style=color:#a6e22e>sourceHeight</span> <span style=color:#f92672>=</span> sourceHeight;
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>this</span>.<span style=color:#a6e22e>lensFacing</span> <span style=color:#f92672>=</span> lensFacing;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// 清空上一次的框</span>
+</span></span><span style=display:flex><span>        rectBoxes.<span style=color:#a6e22e>clear</span>();
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        rectBoxes.<span style=color:#a6e22e>addAll</span>(boxes);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// 关键：触发 onDraw 方法进行重绘</span>
+</span></span><span style=display:flex><span>        invalidate();
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>@Override</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>protected</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>onDraw</span>(<span style=color:#a6e22e>@NonNull</span> Canvas canvas) {
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>super</span>.<span style=color:#a6e22e>onDraw</span>(canvas);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// 如果源尺寸未设置，则不绘制</span>
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span> (sourceWidth <span style=color:#f92672>==</span> 0 <span style=color:#f92672>||</span> sourceHeight <span style=color:#f92672>==</span> 0) {
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>return</span>;
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// 遍历所有转换好的框并绘制出来</span>
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>for</span> (RectF box : rectBoxes) {
+</span></span><span style=display:flex><span>            canvas.<span style=color:#a6e22e>drawRect</span>(box, paint);
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>在<code>DrawView</code>中，通过<code>updateBoxes</code>添加绘制的相关信息，并通过<code>onDraw</code>绘制到UI上。</p><blockquote><p><code>DrawView</code>能正常运行，但不是一个完整的类，我们在后期会丰富完善该类。在实际上，我们需要根据摄像头的画面，实时在不同的位置画框。比如人脸的位置。</p></blockquote><ol start=3><li>分析摄像头画面，确定画框的位置</li></ol><p>在<code>bindPreview</code>中，我们需要添加一个图像分析器，根据分析结果确定在哪里画框。</p><p><strong>实现分析器</strong></p><p>分析器需要实现接口<code>ImageAnalysis.Analyzer</code>，我们的分析器叫做<code>FaceDetectionAnalyzer</code>，目的是检测人脸位置，人脸检查的功能将在后面实现。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#f92672>package</span> com.example.demo;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> android.graphics.Matrix;
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> android.graphics.RectF;
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> android.util.Log;
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> android.util.Size;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> androidx.annotation.NonNull;
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> androidx.annotation.Nullable;
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> androidx.camera.core.ImageAnalysis;
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> androidx.camera.core.ImageProxy;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> java.util.ArrayList;
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> java.util.List;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>FaceDetectionAnalyzer</span> <span style=color:#66d9ef>implements</span> ImageAnalysis.<span style=color:#a6e22e>Analyzer</span> {
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> DrawView viewDrawer;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>int</span> lensFacing;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> <span style=color:#a6e22e>FaceDetectionAnalyzer</span>(<span style=color:#a6e22e>@NonNull</span> DrawView drawer,<span style=color:#66d9ef>int</span> lensFacing){
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>this</span>.<span style=color:#a6e22e>viewDrawer</span><span style=color:#f92672>=</span>drawer;
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>this</span>.<span style=color:#a6e22e>lensFacing</span><span style=color:#f92672>=</span>lensFacing;
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>@Override</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>analyze</span>(<span style=color:#a6e22e>@NonNull</span> ImageProxy image) {
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>int</span> height<span style=color:#f92672>=</span>image.<span style=color:#a6e22e>getHeight</span>(),width<span style=color:#f92672>=</span>image.<span style=color:#a6e22e>getWidth</span>();
+</span></span><span style=display:flex><span>        image.<span style=color:#a6e22e>close</span>();
+</span></span><span style=display:flex><span>        List<span style=color:#f92672>&lt;</span>RectF<span style=color:#f92672>&gt;</span> boxes<span style=color:#f92672>=</span><span style=color:#66d9ef>new</span> ArrayList<span style=color:#f92672>&lt;</span>RectF<span style=color:#f92672>&gt;</span>();
+</span></span><span style=display:flex><span>        boxes.<span style=color:#a6e22e>add</span>(<span style=color:#66d9ef>new</span> RectF(20,20,80,80));
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span>(<span style=color:#66d9ef>this</span>.<span style=color:#a6e22e>viewDrawer</span><span style=color:#f92672>==</span><span style=color:#66d9ef>null</span>){
+</span></span><span style=display:flex><span>            Log.<span style=color:#a6e22e>e</span>(<span style=color:#e6db74>&#34;DRAW_VIEW&#34;</span>,<span style=color:#e6db74>&#34;对象为空&#34;</span>);
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>return</span>;
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// 绘制框到UI上</span>
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>this</span>.<span style=color:#a6e22e>viewDrawer</span>.<span style=color:#a6e22e>updateBoxes</span>(boxes,width,height,<span style=color:#66d9ef>this</span>.<span style=color:#a6e22e>lensFacing</span>);
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>通过<code>analyze</code>中的<code>ImageProxy</code>，我们可以获取图形数据，根据这些数据，我们可以完成人脸检测。</p><p>在这里，固定了框的位置，我们将在后面完善相关功能。</p><p><strong>应用人脸检测</strong></p><p>在前面的<code>bindPreview</code>添加以下代码，实现图形数据分析。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span>ImageAnalysis imageAnalysis <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> ImageAnalysis.<span style=color:#a6e22e>Builder</span>()
+</span></span><span style=display:flex><span>                .<span style=color:#a6e22e>setTargetResolution</span>(<span style=color:#66d9ef>new</span> Size(480, 640)) <span style=color:#75715e>// 可以为分析设置一个合适的分辨率</span>
+</span></span><span style=display:flex><span>                .<span style=color:#a6e22e>setBackpressureStrategy</span>(ImageAnalysis.<span style=color:#a6e22e>STRATEGY_KEEP_ONLY_LATEST</span>) <span style=color:#75715e>// 关键：只处理最新一帧，防止延迟</span>
+</span></span><span style=display:flex><span>                .<span style=color:#a6e22e>build</span>();
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// 为 imageAnalysis 设置分析器</span>
+</span></span><span style=display:flex><span>        imageAnalysis.<span style=color:#a6e22e>setAnalyzer</span>(ContextCompat.<span style=color:#a6e22e>getMainExecutor</span>(<span style=color:#66d9ef>this</span>), <span style=color:#66d9ef>new</span> FaceDetectionAnalyzer(<span style=color:#66d9ef>this</span>.<span style=color:#a6e22e>viewDrawer</span>,lensFacing));
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>       cameraProvider.<span style=color:#a6e22e>bindToLifecycle</span>(<span style=color:#66d9ef>this</span>,cameraSelector,preview,imageAnalysis);
+</span></span></code></pre></div><p>看效果，已经完成了画框。</p><p><img src=/posts/android-camerax/image-1.png alt="alt text"></p><h1 id=结尾>结尾</h1><p>本篇仅仅是人脸识别、疲劳检测的前篇，后面我们将逐步完成整个功能。</p><h1 id=参考文档>参考文档</h1><ul><li><a href="https://developer.android.com/jetpack/androidx/releases/camera?hl=zh-cn#1.3.4" title target=_blank>https://developer.android.com/jetpack/androidx/releases/camera?hl=zh-cn#1.3.4</a></li><li><a href="https://developer.android.com/codelabs/camerax-getting-started?hl=zh-cn#0" title target=_blank>https://developer.android.com/codelabs/camerax-getting-started?hl=zh-cn#0</a></li></ul></div></div></main><footer><p>© Copyright 2025. All rights reserved.</p><p><a href=https://beian.miit.gov.cn/#/Integrated/index target=_blank>蜀ICP备2023031169号-1</a></p></footer></body></html>
