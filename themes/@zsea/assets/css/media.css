@@ -1,25 +1,15 @@
 @media (max-width:1500px) {
     :root {
         --page-width: 100%;
+        --zsea-border-radius: 0px;
+    }
+
+    .details-title {
+        padding: 10px 0px;
     }
 }
 
 @media(max-width:1165px) {
-    .site-header {
-        vertical-align: middle;
-        width: 100%;
-        margin: 8px auto;
-        display: grid;
-        grid-template-columns: 48px 0px auto;
-    }
-
-    .site-title {
-        margin: 0px 10px;
-    }
-
-    .site-title-text {
-        display: none;
-    }
 
     .page-posts,
     .page-products,
@@ -122,7 +112,7 @@
     }
 }
 
-@media(max-width:360px) {
+@media(max-width:520px) {
     .site-header {
         vertical-align: middle;
         width: 100%;
@@ -131,7 +121,43 @@
         grid-template-columns: 0px 0px auto;
     }
 
+    .site-title {
+        display: block;
+    }
+
+    .site-title-text {
+        display: none;
+    }
+
     .site-header nav {
         font-size: 14px;
+        letter-spacing: 0px;
+    }
+}
+
+@media(max-width:360px) {
+    .site-header {
+        vertical-align: middle;
+        width: 100%;
+        margin: 8px auto;
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+    .site-title{
+        display: none;
+    }
+    .site-title-logo{
+        display: none;
+    }
+    .site-menus{
+        height: 100%;
+        padding: 8px 0px;
+        box-sizing: content-box;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .markdown-body {
+        color: black;
     }
 }
