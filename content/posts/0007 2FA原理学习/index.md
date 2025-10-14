@@ -1,7 +1,7 @@
 +++
 title = '2FA原理学习'
 date = 2025-10-14T22:00:04+08:00
-draft = true
+draft = false
 slug = '2fa'
 description ='2FA原理介绍，Two-Factor Authentication'
 keywords =['2FA','TOTP','Two-Factor Authentication']
