@@ -3,7 +3,7 @@ title = '干掉AlibabaProtect.exe和Alibaba PC Safe Service'
 date = 2025-11-10T20:03:05+08:00
 draft = false
 slug = 'kill-alibabaprotect'
-cover ='./0a0d7b2be52fc8b9bcd3ce1c6cf43bfd.png'
+cover ='./image-3.png'
 keywords =['AlibabaProtect', '删除AlibabaProtect', '禁用AlibabaProtect', 'Alibaba PC Safe Service', '千牛', '流氓软件', '计划任务', '系统服务', '进程结束', '文件夹权限']
 description = '本文提供了彻底禁用和删除千牛软件附带的AlibabaProtect.exe及Alibaba PC Safe Service的详细步骤。指南包含删除计划任务、清除系统服务、结束顽固进程以及通过设置文件夹权限防止其重新安装，帮助用户解决软件崩溃、资源占用及隐私安全问题。'
 +++
@@ -17,8 +17,7 @@ description = '本文提供了彻底禁用和删除千牛软件附带的AlibabaP
 
 <!--more-->
 
-![alt text](0a0d7b2be52fc8b9bcd3ce1c6cf43bfd.png)
-
+![alt text](image-3.png)
 # 删除计划任务
 
 ```AlibabaProtect```会添加计划任务来升级和保护自己。按以下步骤删除相关计划。
