@@ -8,7 +8,7 @@ keywords =['AlibabaProtect', '删除AlibabaProtect', '禁用AlibabaProtect', 'Al
 description = '本文提供了彻底禁用和删除千牛软件附带的AlibabaProtect.exe及Alibaba PC Safe Service的详细步骤。指南包含删除计划任务、清除系统服务、结束顽固进程以及通过设置文件夹权限防止其重新安装，帮助用户解决软件崩溃、资源占用及隐私安全问题。'
 +++
 
-在使用旧版的千牛时，经常出现软件无帮崩溃。经过分析，发现是```AlibabaProtect```捣的鬼，这个时候，我们需要禁用掉```AlibabaProtect```。
+在使用旧版的千牛时，经常出现软件无故崩溃。经过分析，发现是```AlibabaProtect```捣的鬼，这个时候，我们需要禁用掉```AlibabaProtect```。
 
 
 > AlibabaProtect是阿里巴巴的全家桶插件,此进程不仅会占用大量内存和cpu性能，会在后台悄悄的监控你的上网过程，还在后台监控你的一举一动，然后给你精准推送广告,所以它不仅仅是一个文件,还是一个恶意软件。而且Alibabaprotect非常难删除，删掉后重启电脑又会自动出现,是一个名副其实的流氓软件。

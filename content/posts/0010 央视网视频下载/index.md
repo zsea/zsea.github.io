@@ -65,5 +65,5 @@ CCTV央视网的视频在网页上观看的时候能正常播放，但能过工�
 
 # 下载地址
 
-链接: https://pan.baidu.com/s/1rsJya6ZWfF2huRz7iVKOGA?pwd=nw5n 提取码: nw5n 
+链接: https://pan.baidu.com/s/1LxEweUAXKOYjXr2-_ACiIA?pwd=66gn 提取码: 66gn
 
