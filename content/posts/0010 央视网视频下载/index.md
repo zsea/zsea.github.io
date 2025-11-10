@@ -19,7 +19,7 @@ CCTV央视网的视频在网页上观看的时候能正常播放，但能过工�
 
 首先，我们找到一个需要下载的视频URL，如：https://eco.cctv.com/2025/08/18/ARTIwIe6PRGCnYRTJZnQRbth250818.shtml
 
-视频下载的工具有很，我这里使用的是浏览器扩展**猫抓**。谷歌商店的地址是：https://chromewebstore.google.com/detail/%E7%8C%AB%E6%8A%93/jfedfbgedapdagkghmgibemcoggfppbb?hl=zh-CN&utm_source=ext_sidebar
+视频下载的工具有很多，我这里使用的是浏览器扩展**猫抓**。谷歌商店的地址是：https://chromewebstore.google.com/detail/%E7%8C%AB%E6%8A%93/jfedfbgedapdagkghmgibemcoggfppbb?hl=zh-CN&utm_source=ext_sidebar
 
 安装后，将扩展固定在浏览器上。
 
