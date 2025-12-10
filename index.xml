@@ -1,4 +1,19 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>海海杂说</title><link>https://www.lsz.sc.cn/</link><description>Recent content on 海海杂说</description><generator>Hugo</generator><language>zh-cn</language><copyright>© Copyright 2025. All rights reserved.</copyright><lastBuildDate>Mon, 10 Nov 2025 20:03:05 +0800</lastBuildDate><atom:link href="https://www.lsz.sc.cn/index.xml" rel="self" type="application/rss+xml"/><item><title>干掉AlibabaProtect.exe和Alibaba PC Safe Service</title><link>https://www.lsz.sc.cn/posts/kill-alibabaprotect/</link><pubDate>Mon, 10 Nov 2025 20:03:05 +0800</pubDate><guid>https://www.lsz.sc.cn/posts/kill-alibabaprotect/</guid><description>&lt;p&gt;在使用旧版的千牛时，经常出现软件无故崩溃。经过分析，发现是&lt;code&gt;AlibabaProtect&lt;/code&gt;捣的鬼，这个时候，我们需要禁用掉&lt;code&gt;AlibabaProtect&lt;/code&gt;。&lt;/p&gt;
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>海海杂说</title><link>https://www.lsz.sc.cn/</link><description>Recent content on 海海杂说</description><generator>Hugo</generator><language>zh-cn</language><copyright>© Copyright 2025. All rights reserved.</copyright><lastBuildDate>Wed, 10 Dec 2025 23:49:56 +0800</lastBuildDate><atom:link href="https://www.lsz.sc.cn/index.xml" rel="self" type="application/rss+xml"/><item><title>2025 12 10_23_49</title><link/><pubDate>Wed, 10 Dec 2025 23:49:56 +0800</pubDate><guid/><description>&lt;p&gt;产品&lt;a href="https://medown.lsz.sc.cn" title="" target="_blank"&gt;米当&lt;/a&gt;开发完成了。无需复杂的设置，米当 (Medown) 让视频下载变得像看视频一样简单。&lt;/p&gt;
+&lt;p&gt;在10月的时候，写过文章讲述如何下载央视视频，央视视频是经过了加密保护的，如果直接下载，加载的视频会是花屏的，无法观看。&lt;/p&gt;
+&lt;p&gt;米当就很好的解决了这个问题。对于其它网站，只要你的视频能够观看，就能够被下载。&lt;/p&gt;
+&lt;p&gt;
+&lt;img src="https://www.lsz.sc.cn/moments/2025-12-10_23_49/image.png" alt="" /&gt;
+
+&lt;img src="https://www.lsz.sc.cn/moments/2025-12-10_23_49/image-1.png" alt="alt text" /&gt;&lt;/p&gt;</description></item><item><title>Electron代码保护工程实践</title><link>https://www.lsz.sc.cn/posts/electron-protect/</link><pubDate>Wed, 10 Dec 2025 21:40:06 +0800</pubDate><guid>https://www.lsz.sc.cn/posts/electron-protect/</guid><description>&lt;p&gt;Electron使用&lt;code&gt;nodejs&lt;/code&gt;和前端代码来开发应用程序，我们先不说开发出来的应用的包大小问题，因为在今天硬盘和内存已经完全超量的情况下，一个Electron的应用跑起来简直太轻松了。&lt;/p&gt;
+&lt;p&gt;但是，Electron应用在发布的时候，只是简单的将代码打包，其源代码未受到任何保护。本文将介绍我在Electron应用源代码的保护过程中的实践。&lt;/p&gt;
+&lt;p&gt;Electron代码运行环境为两种：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;主进程中的代码&lt;/li&gt;
+&lt;li&gt;渲染进程中的代码&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;在不同的进程中，对代码使用不同的保护方式。&lt;/p&gt;
+&lt;p&gt;主进程中的代码，可以直接使用&lt;code&gt;bytenode&lt;/code&gt;编译为字节码。对于渲染进程中的代码，虽然&lt;code&gt;bytenode&lt;/code&gt;也支持，但这是有条件的支持，需要设置&lt;code&gt;nodeIntegration&lt;/code&gt;为&lt;code&gt;true&lt;/code&gt;，开启node的集成才可以。&lt;/p&gt;
+&lt;p&gt;所以，这里的总体思路是，在主进程中的代码使用&lt;code&gt;bytenode&lt;/code&gt;进行编译，渲染进程的预加载(preload)代码，使用&lt;code&gt;javascript-obfuscator&lt;/code&gt;进行混淆。&lt;/p&gt;</description></item><item><title>干掉AlibabaProtect.exe和Alibaba PC Safe Service</title><link>https://www.lsz.sc.cn/posts/kill-alibabaprotect/</link><pubDate>Mon, 10 Nov 2025 20:03:05 +0800</pubDate><guid>https://www.lsz.sc.cn/posts/kill-alibabaprotect/</guid><description>&lt;p&gt;在使用旧版的千牛时，经常出现软件无故崩溃。经过分析，发现是&lt;code&gt;AlibabaProtect&lt;/code&gt;捣的鬼，这个时候，我们需要禁用掉&lt;code&gt;AlibabaProtect&lt;/code&gt;。&lt;/p&gt;
 &lt;blockquote&gt;
 &lt;p&gt;AlibabaProtect是阿里巴巴的全家桶插件,此进程不仅会占用大量内存和cpu性能，会在后台悄悄的监控你的上网过程，还在后台监控你的一举一动，然后给你精准推送广告,所以它不仅仅是一个文件,还是一个恶意软件。而且Alibabaprotect非常难删除，删掉后重启电脑又会自动出现,是一个名副其实的流氓软件。&lt;/p&gt;&lt;/blockquote&gt;
 &lt;p&gt;你可以按照本文的步骤一步一步来禁用掉&lt;code&gt;AlibabaProtect&lt;/code&gt;。&lt;/p&gt;</description></item><item><title>央视网视频下载及花屏修复</title><link>https://www.lsz.sc.cn/posts/cctv-down/</link><pubDate>Fri, 24 Oct 2025 23:52:41 +0800</pubDate><guid>https://www.lsz.sc.cn/posts/cctv-down/</guid><description>&lt;p&gt;CCTV央视网的视频在网页上观看的时候能正常播放，但能过工具下载后播放，视频会出现花屏。就像下图这样：&lt;/p&gt;
