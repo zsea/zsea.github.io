@@ -25,6 +25,7 @@ desc = "软件开发初学者，爱好者。" # 对网站所有者的描述
 icp = "蜀ICP备2023031169号-1" # 域名的ICP备案号
 logo = "/favicon/logo.png" # 在网页左上角的图标
 favicon = "/favicon/favicon-32x32.png" # 网站的favicon图标
+baidu = "codeva-HsEEpK8UQY" # 百度站点认证的代码
 
 description = "个人在计算机知识学习过程中的经验积累，开发的个人产品的发布，与同行学习交流。"
 keywords = "个人博客，计算机技术，软件开发，C/C++/Javascript/js/React，网络知识，逆向，千牛，微信"
@@ -85,7 +86,10 @@ icon = 'icon-json' # 链接的图标
 > 短代码主要用于```markdown```文档中。
 
 # 内容
-
+## 本地测试
+```bash
+hugo server -D -p 3000
+```
 ## 网站内容
 
 网站主要分为博客、产品、动态和关于4个部分。
