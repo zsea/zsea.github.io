@@ -83,3 +83,7 @@ icon = 'icon-json'
 [services]
   [services.googleAnalytics]
     googleAnalytics = 'G-CD1V6LJ8FT'
+[minify]
+  [minify.tdewolff]
+    [minify.tdewolff.html]
+      keepQuotes = true
