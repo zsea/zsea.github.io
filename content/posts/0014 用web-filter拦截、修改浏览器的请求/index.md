@@ -37,7 +37,7 @@ description = '一种轻量的拦截和修改浏览器Ajax请求的方法。'
 脚本提供了一个函数，若你不想将函数暴露在全局(window)中，可以使用匿名函数包裹源代码，降低作用域。
 
 ```javascript
-（function(){
+(function(){
     function createWebFilter(){...}
 })();
 ```
