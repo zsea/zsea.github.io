@@ -2,6 +2,9 @@
 title = '在EdgeOne Pages平台中使用Websocket'
 date = 2026-03-03T12:59:02+08:00
 draft = false
+slug = 'edgeone-pages-websocket'
+keywords =['EdgeOne', 'Pages', 'WebSocket']
+description = '腾讯EdgeOne Pages中WebSocket使用。本文提供清晰的使用步骤。'
 +++
 
 > EdgeOne Pages 是基于 Tencent EdgeOne 基础设施打造的全栈开发部署平台，提供从前端页面到动态 API 的无服务器部署体验，适用于构建营销网站、AI 应用等现代 Web 项目。通过边缘网络全球加速，确保应用获得快速、稳定的访问体验。
