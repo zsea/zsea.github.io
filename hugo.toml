@@ -75,6 +75,13 @@ weight = 2
 [menus.tools.params]
 icon = 'icon-json'
 
+[[menus.tools]]
+name = 'ICO图标生成'
+url = '/html/ico.html'
+weight = 3
+[menus.tools.params]
+icon = 'icon-cc-dot'
+
 [sitemap]
   changeFreq = ''
   filename = 'sitemap.xml'

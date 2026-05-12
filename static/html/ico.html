@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>全规格 ICO 生成器 (32位 + 256色)</title>
+    <style>
+        body { font-family: 'Segoe UI', system-ui, sans-serif; max-width: 900px; margin: 40px auto; text-align: center; background-color: #f0f2f5; color: #333; }
+        .card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .upload-box { border: 3px dashed #4A90E2; padding: 50px; border-radius: 12px; cursor: pointer; background: #f8fbff; transition: all 0.3s; }
+        .upload-box:hover { background: #eef5ff; border-color: #357ABD; }
+        button { margin-top: 30px; padding: 15px 40px; font-size: 18px; font-weight: bold; background-color: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; display: none; box-shadow: 0 4px 15px rgba(40,167,69,0.3); }
+        button:hover { background-color: #218838; transform: translateY(-2px); }
+        .status { margin-top: 20px; font-weight: 500; color: #666; }
+        .list { margin-top: 20px; font-size: 13px; text-align: left; display: inline-block; color: #888; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>全规格 ICO 图标打包工具</h2>
+    <p>每个分辨率均包含 32-bit (含Alpha) 和 8-bit (256色) 版本</p>
+    
+    <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+        <strong>点击选择或拖入源图片</strong>
+        <p style="font-size: 14px; color: #999;">支持 PNG, JPG, WebP</p>
+        <input type="file" id="fileInput" accept="image/*" style="display: none">
+    </div>
+
+    <button id="downloadBtn">保存全规格 .ico 文件</button>
+    <div class="status" id="status">准备就绪</div>
+    
+    <div class="list">
+        生成清单 (按顺序)：<br>
+        256x256 (32位/256色), 128x128 (32位/256色), 64x64 (32位/256色), <br>
+        48x48 (32位/256色), 32x32 (32位/256色), 16x16 (32位/256色)
+    </div>
+</div>
+
+<script>
+    const fileInput = document.getElementById('fileInput');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const status = document.getElementById('status');
+
+    // 定义每种分辨率都包含两个版本，从大到小排列
+    const SIZES = [256, 128, 64, 48, 32, 16];
+    const CONFIGS = [];
+    SIZES.forEach(s => {
+        CONFIGS.push({ w: s, h: s, bpp: 32, type: 'png' }); // 32位版
+        CONFIGS.push({ w: s, h: s, bpp: 8,  type: 'bmp' }); // 256色版
+    });
+
+    fileInput.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        status.innerText = "正在生成 12 个图标图层...";
+        
+        const img = await loadImage(file);
+        const icoBlob = await generateICO(img);
+        
+        const url = URL.createObjectURL(icoBlob);
+        downloadBtn.onclick = () => {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `MultiSize_${Date.now()}.ico`;
+            a.click();
+        };
+        downloadBtn.style.display = 'inline-block';
+        status.innerText = "生成成功！点击上面按钮下载。";
+    };
+
+    function loadImage(file) {
+        return new Promise(res => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = new Image();
+                img.onload = () => res(img);
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    async function generateICO(img) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const imagesData = [];
+
+        for (const conf of CONFIGS) {
+            canvas.width = conf.w;
+            canvas.height = conf.h;
+            ctx.clearRect(0, 0, conf.w, conf.h);
+            // 保持原样缩放
+            ctx.drawImage(img, 0, 0, conf.w, conf.h);
+
+            let buffer;
+            if (conf.type === 'png') {
+                const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+                buffer = new Uint8Array(await blob.arrayBuffer());
+            } else {
+                buffer = create256ColorBitmap(ctx, conf.w, conf.h);
+            }
+
+            imagesData.push({
+                w: conf.w === 256 ? 0 : conf.w,
+                h: conf.h === 256 ? 0 : conf.h,
+                bpp: conf.bpp,
+                colors: conf.bpp === 8 ? 256 : 0,
+                buffer: buffer
+            });
+        }
+
+        return assembleICO(imagesData);
+    }
+
+    // 构建符合传统的 DIB 8位 调色板数据
+    function create256ColorBitmap(ctx, w, h) {
+        const imgData = ctx.getImageData(0, 0, w, h).data;
+        const palette = new Uint8Array(1024); // 256 * 4 (BGR0)
+        const indices = new Uint8Array(w * h);
+        const colorMap = new Map();
+        let colorCount = 0;
+
+        for (let i = 0; i < imgData.length; i += 4) {
+            const r = imgData[i], g = imgData[i+1], b = imgData[i+2];
+            // 使用简易中位切分思想的量化：5位红，5位绿，5位蓝 (或简单位移)
+            // 这里为了纯前端逻辑简洁，采用色彩空间压缩映射
+            const key = (r & 0xE0) | ((g & 0xE0) >> 3) | ((b & 0xC0) >> 6);
+            indices[i/4] = key;
+            
+            const pIdx = key * 4;
+            palette[pIdx] = b;     // B
+            palette[pIdx + 1] = g; // G
+            palette[pIdx + 2] = r; // R
+            palette[pIdx + 3] = 0; // Reserved
+        }
+
+        const headerSize = 40;
+        const paletteSize = 1024;
+        const rowSize = (Math.floor((8 * w + 31) / 32)) * 4; // 8位深度行字节对齐
+        const pixelSize = rowSize * h;
+        const maskSize = (Math.floor((w + 31) / 32)) * 4 * h; // 1位透明遮罩
+
+        const buf = new Uint8Array(headerSize + paletteSize + pixelSize + maskSize);
+        const view = new DataView(buf.buffer);
+
+        // BITMAPINFOHEADER
+        view.setUint32(0, 40, true);
+        view.setUint32(4, w, true);
+        view.setUint32(8, h * 2, true); // ICO中的DIB高度需翻倍
+        view.setUint16(12, 1, true);
+        view.setUint16(14, 8, true);   // 8 bits
+        view.setUint32(20, 0, true);   // BI_RGB (无压缩)
+        view.setUint32(24, pixelSize + maskSize, true);
+        view.setUint32(32, 256, true); // 使用256色
+
+        // 写入调色板
+        buf.set(palette, 40);
+
+        // 写入图像像素 (从底向上)
+        let offset = 40 + paletteSize;
+        for (let y = 0; y < h; y++) {
+            const targetRow = h - 1 - y;
+            for (let x = 0; x < w; x++) {
+                buf[offset + targetRow * rowSize + x] = indices[y * w + x];
+            }
+        }
+        
+        // 遮罩层全设为0（表示不透明，Alpha由32位层处理，或者根据需要自定）
+        // 默认全0即可保证256色版本正常预览
+
+        return buf;
+    }
+
+    function assembleICO(imagesData) {
+        const headerSize = 6;
+        const dirSize = imagesData.length * 16;
+        let offset = headerSize + dirSize;
+        let total = offset;
+        imagesData.forEach(img => total += img.buffer.length);
+
+        const out = new Uint8Array(total);
+        const view = new DataView(out.buffer);
+
+        view.setUint16(2, 1, true);
+        view.setUint16(4, imagesData.length, true);
+
+        imagesData.forEach((img, i) => {
+            const d = headerSize + i * 16;
+            view.setUint8(d, img.w);
+            view.setUint8(d+1, img.h);
+            view.setUint8(d+2, img.colors === 256 ? 0 : 0); // 256色时通常填0，位深决定
+            view.setUint16(d+4, 1, true);
+            view.setUint16(d+6, img.bpp, true);
+            view.setUint32(d+8, img.buffer.length, true);
+            view.setUint32(d+12, offset, true);
+            out.set(img.buffer, offset);
+            offset += img.buffer.length;
+        });
+
+        return new Blob([out], { type: 'image/x-icon' });
+    }
+</script>
+</body>
+</html>
