@@ -1,0 +1,121 @@
+<!doctype html><html lang="zh-cn" dir="ltr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>将DLL做为验证器注入到应用程序中 | 海海杂说</title><link rel="icon" type="image/x-icon" href="/favicon/favicon-32x32.png"><meta name="baidu-site-verification" content="codeva-HsEEpK8UQY"><script async src="https://www.googletagmanager.com/gtag/js?id=G-CD1V6LJ8FT"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-CD1V6LJ8FT")</script><meta name="copyright" content="© Copyright 2025. All rights reserved."><meta name="keywords" content="DLL注入,Application Verifier,应用验证器,DLL Injection,HOOK系统API"><meta name="description" content="通过应用验证器完成DLL注入，先于main函数执行。"><meta name="robots" content="index,follow"><link rel="stylesheet" href="/css/main.min.4161a2f58aba7f239c5d630a2193e893e99cc5b13376e084e11ee73ea9599550.css" integrity="sha256-QWGi9Yq6fyOcXWMKIZPok+mcxbEzduCE4R7nPqlZlVA=" crossorigin="anonymous"><link rel="stylesheet" href="/css/github-markdown.min.ee481479a5f04c7d701db0c6200f10242416b3f4d2a3c073fdc6a09e145dccb8.css" integrity="sha256-7kgUeaXwTH1wHbDGIA8QJCQWs/TSo8Bz/cagnhRdzLg=" crossorigin="anonymous"><link rel="stylesheet" href="/css/iconfont.min.daa5136180ec22c6e9c0b91c926f85d1272434432a6bbd6cb3a571743fdfeb08.css" integrity="sha256-2qUTYYDsIsbpwLkckm+F0SckNEMqa71ss6VxdD/f6wg=" crossorigin="anonymous"><link rel="stylesheet" href="/css/media.min.6d93cf55b3f365f2dd3f8f9f6c60742648bc4d87b03c5c0e947d9950844bf62a.css" integrity="sha256-bZPPVbPzZfLdP4+fbGB0Jki8TYewPFwOlH2ZUIRL9io=" crossorigin="anonymous"><script src="/js/dayjs.min.js"></script><script src="/js/relativeTime.js"></script><script src="/js/zh-cn.js"></script><script src="/js/main.f131ccf6104a927521a409081c405198f6e1a22c1adeff2e4f0c4e55ad2e2f65.js" integrity="sha256-8THM9hBKknUhpAkIHEBRmPbhoiwa3v8uTwxOVa0uL2U=" crossorigin="anonymous"></script><meta name="file" content="posts/0017 将DLL做为验证器注入到应用程序中/index.md"><meta name="color-scheme" content="light"></head><body><header><div class="site-header"><a href="https://www.lsz.sc.cn/" class="site-title"><img src="/favicon/logo.png" class="site-title-logo">
+<span class="site-title-text">海海杂说</span></a><div></div><div class="site-menus"><nav><ul><li><a href="/"><i class="iconfont icon-home"></i>
+首页</a></li><li><a aria-current="true" class="ancestor" href="/posts/"><i class="iconfont icon-medium"></i>
+博客</a></li><li><a href="/products/"><i class="iconfont icon-chanpin"></i>
+产品</a></li><li><a href="/moments/"><i class="iconfont icon-shejiaotubiao-02"></i>
+动态</a></li><li><a href="/about/"><i class="iconfont icon-guanyuwomen"></i>
+关于</a></li></ul></nav></div></div></header><main><div class="details"><div class="details-title">将DLL做为验证器注入到应用程序中</div><hr class="divider"><div class="created">发表于：2026-07-08 22:53:57</div><div class="content markdown-body"><blockquote><p>这是我在研究<code>VxKex</code>时发现的注入方式，网上的资料很少，在AI给出的资料中还有错误，弄得我也是搞了好久才整明白。</p></blockquote><p>在<code>Windows</code>系统中，DLL注入一直是一门应用非常广泛的技术（姑且不讨论大多数应用场景的合法性）。目前主流的注入方式主要有以下几种：</p><ul><li><code>CreateRemoteThread</code>远程注入</li><li><code>QueueUserAPC</code>注入</li><li><code>SetWindowsHookEx</code>注入</li></ul><p>以上注入方式有一个共同点，都是针对<strong>进程</strong>进行注入，即你注入的DLL一定是在进程创建之后的。</p><p>在这里，将介绍一种应用程序验证器的注入方式。这是一种在应用程序早期注入的方式，这种方式的注入，可以让你尽可能早的<code>HOOk</code>到系统函数。</p><p><strong>应用程序验证器</strong>是一个DLL，但是它的加载非常早，早到仅次于<code>ntdll</code>。同时，验证器本身还提供<code>HOOK</code>的方式，不需要依赖第三方库就可以完成系统函数的<code>HOOK</code>。</p><p>操作系统在加载应用程序的时候，会检查注册表中应用程序是否有对应的验证器配置，如果有，就加载验证器DLL。所以说，验证器DLL的加载是由操作系统来完成的，几乎不会被其它软件阻止。</p><h1 id="配置验证器">配置验证器</h1><p>在注册表<code>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options</code>下，有多个以应用程序名称命名的项，每个项就是一个应用程序的配置。
+<img src="/posts/application-verifier/image-1.png" alt="alt text"></p><p>在这里，有两个必要的键需要配置：</p><ul><li>GlobalFlag。设置为<code>0x100</code>，表示启用应用程序验证器。</li><li>VerifierDlls。验证器列表，多个验证器之间用<code> </code>（空格）分隔。注意，这里只填DLL的名称，DLL的路径需要放到<code>C:\Windows\System32</code>目录下，这就需要安装的时候提供管理员权限。如果你是在64位系统下注入到一个32位的应用程序中，验证器也需要是32的，放于<code>C:\Windows\SysWOW64</code>目录中。</li></ul><blockquote><p>我在修改<code>VerifierDlls</code>项的时候，就遇到了杀毒软件拦截。</p></blockquote><p>到这里，如果你的DLL只是一个普通的DLL，那应用程序在启动的时候将出出现闪退、报错等问题不能启动。</p><h2 id="配置具体的应用程序">配置具体的应用程序</h2><p>在上图中，如果直接在<code>medown.exe</code>下进行配置，则所有名称为<code>medown.exe</code>的程序都会受到影响，如果要注入到指定路径的应用程序中，可以在<code>medown.exe</code>项下建立子项，子项的名称可以自己随意取。</p><p><strong>具体步骤如下：</strong></p><ol><li>在<code>medown.exe</code>项下，建立名称为<code>UseFilter</code>，类型为<code>REG_DWORD</code>，值为<code>1</code>的注册表键，表示开始过滤。</li><li>在<code>medown.exe</code>项下建立子项，在子项目中按上面的描述建立<code>GlobalFlag</code>和<code>VerifierDlls</code>键。</li><li>在新建的子项中，新建一个名称为<code>FilterFullPath</code>，类型为<code>REG_SZ</code>，值为应用程序详细路径的键。</li></ol><p>通过上面的配置，就只有指定位置的程序会加载验证器了。</p><h1 id="验证器代码框架">验证器代码框架</h1><p>和普通DLL一样，验证器也是以<code>DllMain(HMODULE hModule,DWORD ul_reason_for_call,LPVOID lpReserved)</code>为入口。在普通DLL中，<code>ul_reason_for_call</code>的值只有以下四个：</p><ul><li>DLL_PROCESS_ATTACH(1)</li><li>DLL_THREAD_ATTACH(2)</li><li>DLL_THREAD_DETACH(3)</li><li>DLL_PROCESS_DETACH(0)</li></ul><blockquote><p>这几个值的含义不在这里讨论。</p></blockquote><p>在验证器中，还会传入另一个值<code>DLL_PROCESS_VERIFIER(4)</code>，在这个值中，<code>lpReserved</code>不再仅用做保留，而需要返回一个特殊的数据结构。</p><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="display:flex"><span><span style="color:#75715e">#define DLL_PROCESS_VERIFIER 4
+</span></span></span><span style="display:flex"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex"><span>BOOL APIENTRY <span style="color:#a6e22e">DllMain</span>( HMODULE hModule,
+</span></span><span style="display:flex"><span>                       DWORD  ul_reason_for_call,
+</span></span><span style="display:flex"><span>                       LPVOID lpReserved
+</span></span><span style="display:flex"><span>                     )
+</span></span><span style="display:flex"><span>{
+</span></span><span style="display:flex"><span>    <span style="color:#66d9ef">switch</span> (ul_reason_for_call)
+</span></span><span style="display:flex"><span>    {
+</span></span><span style="display:flex"><span>    <span style="color:#66d9ef">case</span> DLL_PROCESS_ATTACH:
+</span></span><span style="display:flex"><span>		<span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex"><span>    <span style="color:#66d9ef">case</span> DLL_THREAD_ATTACH:
+</span></span><span style="display:flex"><span>    <span style="color:#66d9ef">case</span> DLL_THREAD_DETACH:
+</span></span><span style="display:flex"><span>    <span style="color:#66d9ef">case</span> DLL_PROCESS_DETACH:
+</span></span><span style="display:flex"><span>        <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex"><span>	<span style="color:#66d9ef">case</span> DLL_PROCESS_VERIFIER:
+</span></span><span style="display:flex"><span>        InitVerifier();
+</span></span><span style="display:flex"><span>        <span style="color:#f92672">*</span>(<span style="color:#66d9ef">void</span><span style="color:#f92672">**</span>)lpReserved <span style="color:#f92672">=</span> <span style="color:#f92672">&amp;</span>g_verifierDesc;
+</span></span><span style="display:flex"><span>		<span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex"><span>    }
+</span></span><span style="display:flex"><span>    
+</span></span><span style="display:flex"><span>    <span style="color:#66d9ef">return</span> TRUE;
+</span></span><span style="display:flex"><span>}
+</span></span></code></pre></div><p>在<code>DLL_PROCESS_VERIFIER</code>分支中，调用<code>InitVerifier()</code>初始化了一个全局的结构，并将指针放于<code>lpReserved</code>中。</p><p>不过要注意，在<code>DLL_PROCESS_VERIFIER</code>中，由于仅加载了<code>ntdll</code>，很多功能都还不能使用，一般只初始化<code>RTL_VERIFIER_PROVIDER_DESCRIPTOR</code>即可。</p><h2 id="rtl_verifier_provider_descriptor结构">RTL_VERIFIER_PROVIDER_DESCRIPTOR结构</h2><blockquote><p>关于<code>RTL_VERIFIER_PROVIDER_DESCRIPTOR</code>没有查到正式的公开文档，这里的结构是参考<code>ReactOS</code>中的代码。我将相关的结构放到<code>verifier_def.h</code>中。</p></blockquote><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="display:flex"><span><span style="color:#75715e">#pragma once
+</span></span></span><span style="display:flex"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;Windows.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex"><span><span style="color:#75715e">#define DLL_PROCESS_VERIFIER 4
+</span></span></span><span style="display:flex"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex"><span><span style="color:#66d9ef">typedef</span> <span style="color:#a6e22e">VOID</span>(NTAPI<span style="color:#f92672">*</span> RTL_VERIFIER_DLL_LOAD_CALLBACK) (PWSTR DllName, PVOID DllBase, SIZE_T DllSize, PVOID Reserved);
+</span></span><span style="display:flex"><span><span style="color:#66d9ef">typedef</span> <span style="color:#a6e22e">VOID</span>(NTAPI<span style="color:#f92672">*</span> RTL_VERIFIER_DLL_UNLOAD_CALLBACK) (PWSTR DllName, PVOID DllBase, SIZE_T DllSize, PVOID Reserved);
+</span></span><span style="display:flex"><span><span style="color:#66d9ef">typedef</span> <span style="color:#a6e22e">VOID</span>(NTAPI<span style="color:#f92672">*</span> RTL_VERIFIER_NTDLLHEAPFREE_CALLBACK) (PVOID AllocationBase, SIZE_T AllocationSize);
+</span></span><span style="display:flex"><span>
+</span></span><span style="display:flex"><span><span style="color:#75715e">// 需要HOOK的函数
+</span></span></span><span style="display:flex"><span><span style="color:#75715e"></span><span style="color:#66d9ef">typedef</span> <span style="color:#a6e22e">DWORD</span>(WINAPI<span style="color:#f92672">*</span> PFN_BaseThreadInitThunk)(DWORD Hooked, LPTHREAD_START_ROUTINE StartAddress, PVOID Parameter);
+</span></span><span style="display:flex"><span>
+</span></span><span style="display:flex"><span><span style="color:#66d9ef">typedef</span> <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">_RTL_VERIFIER_THUNK_DESCRIPTOR</span> {
+</span></span><span style="display:flex"><span>    PCHAR ThunkName;
+</span></span><span style="display:flex"><span>    PVOID ThunkOldAddress;
+</span></span><span style="display:flex"><span>    PVOID ThunkNewAddress;
+</span></span><span style="display:flex"><span>} RTL_VERIFIER_THUNK_DESCRIPTOR, <span style="color:#f92672">*</span> PRTL_VERIFIER_THUNK_DESCRIPTOR;
+</span></span><span style="display:flex"><span>
+</span></span><span style="display:flex"><span><span style="color:#66d9ef">typedef</span> <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">_RTL_VERIFIER_DLL_DESCRIPTOR</span> {
+</span></span><span style="display:flex"><span>    PWCHAR DllName;
+</span></span><span style="display:flex"><span>    DWORD DllFlags;
+</span></span><span style="display:flex"><span>    PVOID DllAddress;
+</span></span><span style="display:flex"><span>    PRTL_VERIFIER_THUNK_DESCRIPTOR DllThunks;
+</span></span><span style="display:flex"><span>} RTL_VERIFIER_DLL_DESCRIPTOR, <span style="color:#f92672">*</span> PRTL_VERIFIER_DLL_DESCRIPTOR;
+</span></span><span style="display:flex"><span>
+</span></span><span style="display:flex"><span><span style="color:#66d9ef">typedef</span> <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">_RTL_VERIFIER_PROVIDER_DESCRIPTOR</span> {
+</span></span><span style="display:flex"><span>    <span style="color:#75715e">// Provider fields
+</span></span></span><span style="display:flex"><span><span style="color:#75715e"></span>    DWORD Length;
+</span></span><span style="display:flex"><span>    PRTL_VERIFIER_DLL_DESCRIPTOR ProviderDlls;
+</span></span><span style="display:flex"><span>    RTL_VERIFIER_DLL_LOAD_CALLBACK ProviderDllLoadCallback;
+</span></span><span style="display:flex"><span>    RTL_VERIFIER_DLL_UNLOAD_CALLBACK ProviderDllUnloadCallback;
+</span></span><span style="display:flex"><span>
+</span></span><span style="display:flex"><span>    <span style="color:#75715e">// Verifier fields
+</span></span></span><span style="display:flex"><span><span style="color:#75715e"></span>    PWSTR VerifierImage;
+</span></span><span style="display:flex"><span>    DWORD VerifierFlags;
+</span></span><span style="display:flex"><span>    DWORD VerifierDebug;
+</span></span><span style="display:flex"><span>    PVOID RtlpGetStackTraceAddress;
+</span></span><span style="display:flex"><span>    PVOID RtlpDebugPageHeapCreate;
+</span></span><span style="display:flex"><span>    PVOID RtlpDebugPageHeapDestroy;
+</span></span><span style="display:flex"><span>
+</span></span><span style="display:flex"><span>    <span style="color:#75715e">// Provider field
+</span></span></span><span style="display:flex"><span><span style="color:#75715e"></span>    RTL_VERIFIER_NTDLLHEAPFREE_CALLBACK ProviderNtdllHeapFreeCallback;
+</span></span><span style="display:flex"><span>} RTL_VERIFIER_PROVIDER_DESCRIPTOR, <span style="color:#f92672">*</span> PRTL_VERIFIER_PROVIDER_DESCRIPTOR;
+</span></span></code></pre></div><p>其中<code>RTL_VERIFIER_THUNK_DESCRIPTOR</code>和<code>RTL_VERIFIER_DLL_DESCRIPTOR</code>是用于<code>HOOK</code>的结构，只需要按说明填写，验证器就可以自动完成对指定函数的<code>HOOK</code>。</p><p>我们接着说<code>InitVerifier()</code>函数，在这个函数里，填充了一个<code>RTL_VERIFIER_PROVIDER_DESCRIPTOR</code>。</p><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="display:flex"><span><span style="color:#66d9ef">static</span> RTL_VERIFIER_PROVIDER_DESCRIPTOR g_verifierDesc <span style="color:#f92672">=</span> {<span style="color:#ae81ff">0</span>};
+</span></span><span style="display:flex"><span>
+</span></span><span style="display:flex"><span><span style="color:#66d9ef">static</span> RTL_VERIFIER_DLL_DESCRIPTOR emptyDlls[] <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex"><span>    { <span style="color:#66d9ef">nullptr</span>, <span style="color:#ae81ff">0</span>, <span style="color:#66d9ef">nullptr</span>, <span style="color:#66d9ef">nullptr</span> }
+</span></span><span style="display:flex"><span>};
+</span></span><span style="display:flex"><span>
+</span></span><span style="display:flex"><span><span style="color:#66d9ef">void</span> NTAPI <span style="color:#a6e22e">DLLLoad</span>(PWSTR DllName, PVOID DllBase, SIZE_T DllSize, PVOID Reserved) {
+</span></span><span style="display:flex"><span>
+</span></span><span style="display:flex"><span>}
+</span></span><span style="display:flex"><span><span style="color:#66d9ef">void</span> NTAPI <span style="color:#a6e22e">DLLUnLoad</span>(PWSTR DllName, PVOID DllBase, SIZE_T DllSize, PVOID Reserved) {
+</span></span><span style="display:flex"><span>
+</span></span><span style="display:flex"><span>}
+</span></span><span style="display:flex"><span><span style="color:#66d9ef">void</span> NTAPI <span style="color:#a6e22e">DLLNTHeapFree</span>(PVOID AllocationBase, SIZE_T AllocationSize) {
+</span></span><span style="display:flex"><span>}
+</span></span><span style="display:flex"><span>RTL_VERIFIER_PROVIDER_DESCRIPTOR<span style="color:#f92672">*</span> <span style="color:#a6e22e">InitVerifier</span>() {
+</span></span><span style="display:flex"><span>    <span style="color:#75715e">// Inside DLL_VERIFIER:
+</span></span></span><span style="display:flex"><span><span style="color:#75715e"></span>    g_verifierDesc.Length <span style="color:#f92672">=</span> <span style="color:#66d9ef">sizeof</span>(RTL_VERIFIER_PROVIDER_DESCRIPTOR);
+</span></span><span style="display:flex"><span>    g_verifierDesc.ProviderDlls <span style="color:#f92672">=</span> emptyDlls;
+</span></span><span style="display:flex"><span>    g_verifierDesc.ProviderDllLoadCallback <span style="color:#f92672">=</span> DLLLoad;
+</span></span><span style="display:flex"><span>    g_verifierDesc.ProviderDllUnloadCallback <span style="color:#f92672">=</span> DLLUnLoad;
+</span></span><span style="display:flex"><span>	g_verifierDesc.ProviderNtdllHeapFreeCallback <span style="color:#f92672">=</span> DLLNTHeapFree;
+</span></span><span style="display:flex"><span>	<span style="color:#66d9ef">return</span> <span style="color:#f92672">&amp;</span>g_verifierDesc;
+</span></span><span style="display:flex"><span>}
+</span></span></code></pre></div><p>在这里，<code>emptyDlls</code>以一个空的结构结束，表示不需要<code>HOOK</code>任何东西。将这个空的DLL编译并安装到注册表中，再启动应用程序，就可以在应用程序的模块中看到这个DLL。</p><h1 id="hook功能的实现">HOOK功能的实现</h1><p>在前面已说明，要HOOK只需要填充<code>RTL_VERIFIER_THUNK_DESCRIPTOR</code>和<code>RTL_VERIFIER_DLL_DESCRIPTOR</code>即可。</p><p><strong>RTL_VERIFIER_THUNK_DESCRIPTOR结构说明</strong></p><p><code>RTL_VERIFIER_THUNK_DESCRIPTOR</code>有三个字段，用于描述HOOK相关的函数信息</p><ul><li>ThunkName - 需要HOOK的函数名称，这个函数必须是DLL中的导出函数。</li><li>ThunkOldAddress - 在HOOK成功后，系统会将旧的函数地址填入这里。你自己的函数中，可以通过这个地址调用原始的函数。</li><li>ThunkNewAddress - 你自己写的函数，用于替代原始的函数。</li></ul><p><strong>RTL_VERIFIER_DLL_DESCRIPTOR结构说明</strong></p><p><code>RTL_VERIFIER_DLL_DESCRIPTOR</code>用于描述需要HOOK的DLL的信息，当然，也通过相关字段关联了前面的HOOK的函数。</p><ul><li>DllName - 需要HOOK的DLL的名称，如：kernel32.dll。<strong>注意：必须包括扩展名。</strong></li><li>DllFlags- 设置为<code>0</code>即可。</li><li>DllAddress - DLL的地址，由系统处理，填<code>NULL</code>即可。</li><li>DllThunks - 当前DLL中需要HOOK的函数信息，最后一条记录必须所有字段都是<code>0</code>。</li></ul><p>下面的示例，用于HOOK<code>kernel32.dll</code>中的<code>VirtualAlloc</code>函数。</p><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="display:flex"><span><span style="color:#75715e">// Forward declaration
+</span></span></span><span style="display:flex"><span><span style="color:#75715e"></span>LPVOID WINAPI <span style="color:#a6e22e">HookVirtualAlloc</span>(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect) {
+</span></span><span style="display:flex"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">auto</span> originalFn <span style="color:#f92672">=</span> (<span style="color:#66d9ef">decltype</span>(<span style="color:#f92672">&amp;</span>VirtualAlloc))g_funcs[<span style="color:#ae81ff">0</span>].ThunkOldAddress;
+</span></span><span style="display:flex"><span>
+</span></span><span style="display:flex"><span>    <span style="color:#66d9ef">auto</span> msg <span style="color:#f92672">=</span> std<span style="color:#f92672">::</span>format(<span style="color:#e6db74">&#34;VirtualAlloc: tid={} size={} type={:#x} prot={:#x} lp={}</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>,
+</span></span><span style="display:flex"><span>        GetCurrentThreadId(), dwSize, flAllocationType, flProtect, lpAddress);
+</span></span><span style="display:flex"><span>    OutputDebugStringA(msg.c_str());
+</span></span><span style="display:flex"><span>
+</span></span><span style="display:flex"><span>    LPVOID result <span style="color:#f92672">=</span> originalFn(lpAddress, dwSize, flAllocationType, flProtect);
+</span></span><span style="display:flex"><span>
+</span></span><span style="display:flex"><span>    <span style="color:#66d9ef">auto</span> msg2 <span style="color:#f92672">=</span> std<span style="color:#f92672">::</span>format(<span style="color:#e6db74">&#34;VirtualAlloc result: {}</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, result);
+</span></span><span style="display:flex"><span>    OutputDebugStringA(msg2.c_str());
+</span></span><span style="display:flex"><span>
+</span></span><span style="display:flex"><span>    <span style="color:#66d9ef">return</span> result;
+</span></span><span style="display:flex"><span>}
+</span></span><span style="display:flex"><span>
+</span></span><span style="display:flex"><span><span style="color:#66d9ef">static</span> RTL_VERIFIER_THUNK_DESCRIPTOR g_funcs[] <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex"><span>    { (LPSTR)<span style="color:#e6db74">&#34;VirtualAlloc&#34;</span>, <span style="color:#66d9ef">nullptr</span>, HookVirtualAlloc },
+</span></span><span style="display:flex"><span>    { <span style="color:#66d9ef">nullptr</span>, <span style="color:#ae81ff">0</span>, <span style="color:#66d9ef">nullptr</span> }  <span style="color:#75715e">// sentinel
+</span></span></span><span style="display:flex"><span><span style="color:#75715e"></span>};
+</span></span><span style="display:flex"><span>
+</span></span><span style="display:flex"><span><span style="color:#66d9ef">static</span> RTL_VERIFIER_DLL_DESCRIPTOR g_dlls[] <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex"><span>    { (PWSTR)<span style="color:#e6db74">L</span><span style="color:#e6db74">&#34;kernel32.dll&#34;</span>, <span style="color:#ae81ff">0</span>, <span style="color:#66d9ef">nullptr</span>, g_funcs },
+</span></span><span style="display:flex"><span>    { <span style="color:#66d9ef">nullptr</span>, <span style="color:#ae81ff">0</span>, <span style="color:#66d9ef">nullptr</span>, <span style="color:#66d9ef">nullptr</span> }  <span style="color:#75715e">// sentinel
+</span></span></span><span style="display:flex"><span><span style="color:#75715e"></span>};
+</span></span></code></pre></div><blockquote><p>如果要HOOK多个函数，则在<code>g_funcs</code>中继续添加即可。</p></blockquote><p>将前面<code>g_verifierDesc.ProviderDlls</code>的值改为当前的<code>g_dlls</code>即可完成HOOK。</p><h1 id="补充">补充</h1><blockquote><p>补充的内容都是通过实测出来的，没有找到文档说明。</p></blockquote><ol><li><code>DLL_PROCESS_VERIFIER</code>优先于<code>DLL_PROCESS_ATTACH</code>执行，在<code>DLL_PROCESS_VERIFIER</code>中，我甚至不能调用<code>OutputDebugString</code>，但是在<code>DLL_PROCESS_ATTACH</code>中则可以调用。同时，可以在<code>DLL_PROCESS_ATTACH</code>中检查到<code>g_verifierDesc</code>已完成初始化。</li><li><code>DLL_PROCESS_ATTACH</code>优先于应用程序的<code>main</code>函数执行。</li></ol><h1 id="参考文档">参考文档</h1><ul><li><a href="https://trainsec.net/library/windows-internals/dll-injection-with-windows-application-verifier/" title target="_blank">https://trainsec.net/library/windows-internals/dll-injection-with-windows-application-verifier/</a></li><li><a href="https://doxygen.reactos.org/d8/d11/verifier_8h_source.html" title target="_blank">https://doxygen.reactos.org/d8/d11/verifier_8h_source.html</a></li></ul></div></div></main><footer><p>© Copyright 2025. All rights reserved.</p><p><a href="https://beian.miit.gov.cn/#/Integrated/index" target="_blank">蜀ICP备2023031169号-1</a></p></footer></body></html>
