@@ -67,3 +67,11 @@ CCTV央视网的视频在网页上观看的时候能正常播放，但能过工�
 
 链接: https://pan.baidu.com/s/1LxEweUAXKOYjXr2-_ACiIA?pwd=66gn 提取码: 66gn
 
+# 最新推荐
+
+上面使用的都是手动下载的方法，你也可以使用[米当](https://medown.lsz.sc.cn/)进行全自动下载。
+
+**米当**是一款全自动Web视频下载软件，使用米当下载央视视频后，不需要进行任何处理，直接就可以在播放器中播放。
+
+**下载地址**：[https://medown.lsz.sc.cn/](https://medown.lsz.sc.cn/)
+
