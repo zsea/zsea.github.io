@@ -1,6 +1,16 @@
+{{ $page := . }}
+{{ $pagetitle := "" }}
+{{ if .IsHome }}
+  {{ $pagetitle = site.Title }}
+{{ else }}
+  {{ $pagetitle = printf "%s | %s" .Title site.Title }}
+{{ end }}
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ printf "%s | %s" .Title site.Title }}{{ end }}</title>
+<title>{{ $pagetitle }}</title>
+<meta property="og:title" content="{{ $pagetitle }}">
+<meta property="og:site_name" content="{{ site.Title }}">
+<meta property="og:url" content="{{ $page.Permalink }}">
 {{ with site.Params.favicon }}<link rel="icon" type="image/x-icon" href="{{ . }}">{{ end }}
 {{ with site.Params.baidu }}<meta name="baidu-site-verification" content="{{ . }}" />{{ end }}
 {{ with site.Params.googleAnalytics }}
@@ -36,7 +46,20 @@
     {{ if $finalKeywords }}
     <meta name="keywords" content="{{ $finalKeywords }}">
     {{ end }}
-    {{ with $.Params.description }}<meta name="description" content="{{$.Params.description}}">{{ end }}
+    {{ with $.Params.description }}
+      <meta name="description" content="{{$.Params.description}}">
+      <meta property="og:description" content="{{$.Params.description}}">
+      <meta name="wx.share.desc" content="{{$.Params.description}}">
+    {{ end }}
+    {{ with $.Params.cover }}
+            {{ $path := . }}
+            {{ $isRemote := or (strings.HasPrefix $path "http://") (strings.HasPrefix $path "https://") (strings.HasPrefix $path "/") (strings.HasPrefix $path "://") }}
+            {{- if not $isRemote -}}
+                {{  $path = urls.JoinPath (partial "url.html" $page) .  }}
+            {{- end -}}
+            {{ $path = $path | absURL }}
+      <meta property="og:image" content="{{ $path }}">
+    {{ end }}
 {{ end }}
 <meta name="robots" content="index,follow">
 {{ partialCached "head/css.html" . }}
