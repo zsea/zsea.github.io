@@ -288,16 +288,16 @@ main {
 	display: flex;
 	justify-content: center;
 	/* 水平居中 */
-	align-items: center;
+	align-items: start;
 }
 
 .posts-item-summary-cover>img {
-	max-width: 260px;
+	max-width: 120px;
 }
 
 .posts-item-summary-text {
 	/* text-indent: 2em; */
-	min-width: 830px;
+	min-width: 970px;
 }
 
 .page-posts .posts-item-summary-text,
