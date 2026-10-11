@@ -4,6 +4,8 @@ date = 2026-10-11T17:35:20+08:00
 draft = true
 slug = 'medown-not-stop'
 cover = "./medown.png"
+keywords =['medown', '米当', '视频下载', '通用WEB视频下载软件', '不结束']
+description = '通过手工合成的方式解决使用米当下载视频结束后还一直转圈的问题'
 +++
 
 **米当**的设计目标是通用的WEB视频下载软件，但在实际使用过程中，总会因为各种兼容性问题导致软件功能出现异常。
